@@ -1,5 +1,44 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Component, type ReactNode } from 'react';
 import * as gs from './services/googleSheets';
+
+// Error Boundary для предотвращения белой страницы
+export class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('Ошибка приложения:', error, errorInfo);
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-white flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 border border-red-200 shadow-lg max-w-lg w-full">
+            <div className="text-center">
+              <div className="text-5xl mb-4">⚠️</div>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">Произошла ошибка</h2>
+              <p className="text-red-600 text-sm mb-4">{this.state.error?.message}</p>
+              <button 
+                onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium"
+              >
+                🔄 Перезагрузить страницу
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Проверка подключения
 const isConfigured = gs.isConnected();
@@ -426,7 +465,7 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
-                      {msg.from.split(' ').map(n => n[0]).join('')}
+                      {(msg.from || '').split(' ').map(n => n[0]).join('')}
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-slate-800">{msg.from}</p>
@@ -493,11 +532,11 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-blue-500">
-                          {emp.fullName.split(' ').slice(0, 2).map(n => n[0]).join('')}
+                          {(emp.fullName || '').split(' ').slice(0, 2).map(n => n[0]).join('')}
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-slate-800">{emp.fullName}</div>
-                          <div className="text-xs text-slate-500">{emp.position}</div>
+                          <div className="text-sm font-medium text-slate-800">{emp.fullName || 'Без имени'}</div>
+                          <div className="text-xs text-slate-500">{emp.position || 'Не указана'}</div>
                         </div>
                       </div>
                     </td>
@@ -663,9 +702,9 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white bg-blue-500">
-                        {emp.fullName.split(' ').slice(0, 2).map(n => n[0]).join('')}
+                        {(emp.fullName || '').split(' ').slice(0, 2).map(n => n[0]).join('')}
                       </div>
-                      <div className="text-sm font-medium text-slate-800">{emp.fullName}</div>
+                      <div className="text-sm font-medium text-slate-800">{emp.fullName || 'Без имени'}</div>
                     </div>
                   </td>
                   <td className="px-5 py-3">
@@ -753,11 +792,11 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold text-white bg-blue-500">
-                  {selectedEmployee.fullName.split(' ').slice(0, 2).map(n => n[0]).join('')}
+                  {(selectedEmployee.fullName || '').split(' ').slice(0, 2).map(n => n[0]).join('')}
                 </div>
                 <div>
-                  <div className="text-xl font-semibold text-slate-800">{selectedEmployee.fullName}</div>
-                  <div className="text-sm text-slate-500">Персональный номер: {selectedEmployee.personalNumber}</div>
+                  <div className="text-xl font-semibold text-slate-800">{selectedEmployee.fullName || 'Без имени'}</div>
+                  <div className="text-sm text-slate-500">Персональный номер: {selectedEmployee.personalNumber || 'Не указан'}</div>
                 </div>
               </div>
               <div className="space-y-3">
@@ -1043,8 +1082,10 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('all');
 
+  const searchLower = search.toLowerCase().trim();
   const filtered = nomenclature.filter(n => {
-    const matchSearch = n.name.toLowerCase().includes(search.toLowerCase());
+    const name = (n.name || '').toLowerCase();
+    const matchSearch = !searchLower || name.includes(searchLower);
     const matchCat = catFilter === 'all' || n.category === catFilter;
     return matchSearch && matchCat;
   });
@@ -1232,7 +1273,7 @@ function OperationsPage({ data }: { data: ReturnType<typeof useData> }) {
                 return (
                   <tr key={exp.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="px-5 py-3 text-sm text-slate-700">{exp.callDate}</td>
-                    <td className="px-5 py-3 text-sm text-slate-800">{emp?.fullName.split(' ').slice(0, 2).join(' ')}</td>
+                    <td className="px-5 py-3 text-sm text-slate-800">{(emp?.fullName || '').split(' ').slice(0, 2).join(' ')}</td>
                     <td className="px-5 py-3">
                       <div className="text-sm text-slate-800">{exp.patientName}</div>
                       <div className="text-xs text-slate-500">ДР: {exp.patientBirthDate}</div>
@@ -1634,10 +1675,14 @@ function AuditPage({ data }: { data: ReturnType<typeof useData> }) {
   const { auditLog } = data;
   const [search, setSearch] = useState('');
 
-  const filtered = auditLog.filter(log =>
-    !search || log.newValue.toLowerCase().includes(search.toLowerCase()) ||
-    log.oldValue.toLowerCase().includes(search.toLowerCase()) || log.recordId.toLowerCase().includes(search.toLowerCase())
-  );
+  const searchLower = search.toLowerCase().trim();
+  const filtered = auditLog.filter(log => {
+    if (!searchLower) return true;
+    const newValue = (log.newValue || '').toLowerCase();
+    const oldValue = (log.oldValue || '').toLowerCase();
+    const recordId = (log.recordId || '').toLowerCase();
+    return newValue.includes(searchLower) || oldValue.includes(searchLower) || recordId.includes(searchLower);
+  });
 
   return (
     <div className="space-y-6">
