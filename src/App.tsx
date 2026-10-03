@@ -593,19 +593,8 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   const filtered = employees
     .filter(e => e.status !== 'Уволен')
     .filter(e => {
-      if (!searchLower) return true; // Если поиск пустой — показываем всех
-      
-      const fullName = String(e.fullName ?? '').toLowerCase();
-      const personalNumber = String(e.personalNumber ?? '').toLowerCase();
-      const position = String(e.position ?? '').toLowerCase();
-      const phone = String(e.phone ?? '').toLowerCase();
-      
-      return (
-        fullName.includes(searchLower) ||
-        personalNumber.includes(searchLower) ||
-        position.includes(searchLower) ||
-        phone.includes(searchLower)
-      );
+      if (!searchLower) return true;
+      return String(e.fullName ?? '').toLowerCase().includes(searchLower);
     });
 
   const getArrival = (empId: string) => arrivals.filter(a => a.employeeId === empId && a.month === currentMonth).reduce((s, a) => s + a.amount, 0);
@@ -673,7 +662,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   return (
     <div className="space-y-6">
       <div className="flex gap-3">
-        <input type="text" placeholder="🔍 Поиск по ФИО, номеру, должности, телефону..." value={search} onChange={e => setSearch(e.target.value)}
+        <input type="text" placeholder="🔍 Поиск по ФИО..." value={search} onChange={e => setSearch(e.target.value)}
           className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm" />
         <button onClick={() => setShowAdd(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium shadow-sm">+ Добавить сотрудника</button>
       </div>
