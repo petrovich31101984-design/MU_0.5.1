@@ -589,16 +589,16 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
 
 
   // Фильтруем сотрудников: не показываем уволенных (они в архиве)
-  const searchLower = search.toLowerCase().trim();
+  const searchLower = String(search || '').toLowerCase().trim();
   const filtered = employees
     .filter(e => e.status !== 'Уволен')
     .filter(e => {
       if (!searchLower) return true; // Если поиск пустой — показываем всех
       
-      const fullName = (e.fullName || '').toLowerCase();
-      const personalNumber = (e.personalNumber || '').toLowerCase();
-      const position = (e.position || '').toLowerCase();
-      const phone = (e.phone || '').toLowerCase();
+      const fullName = String(e.fullName ?? '').toLowerCase();
+      const personalNumber = String(e.personalNumber ?? '').toLowerCase();
+      const position = String(e.position ?? '').toLowerCase();
+      const phone = String(e.phone ?? '').toLowerCase();
       
       return (
         fullName.includes(searchLower) ||
@@ -619,7 +619,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
     // Проверка на дубликат ПЕРЕД добавлением
     const trimmedNumber = form.personalNumber.trim();
     const existingEmployee = employees.find(e => {
-      const existingNumber = (e.personalNumber || '').trim();
+      const existingNumber = String(e.personalNumber ?? '').trim();
       return existingNumber === trimmedNumber;
     });
     
@@ -844,7 +844,7 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
     
     // Проверка на дубликат
     const existingEmployee = employees.find(e => {
-      const existingNumber = (e.personalNumber || '').trim();
+      const existingNumber = String(e.personalNumber ?? '').trim();
       return existingNumber === trimmedNumber;
     });
     
@@ -858,7 +858,7 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
     
     if (!result) {
       // Получаем имя существующего сотрудника для сообщения
-      const existingEmp = employees.find(e => (e.personalNumber || '').trim() === trimmedNumber);
+      const existingEmp = employees.find(e => String(e.personalNumber ?? '').trim() === trimmedNumber);
       const errorMsg = existingEmp 
         ? `Сотрудник с персональным номером "${trimmedNumber}" уже существует (${existingEmp.fullName})`
         : `Сотрудник с персональным номером "${trimmedNumber}" уже существует`;
@@ -968,7 +968,7 @@ function EditEmployeeModal({
     
     const existingEmployee = employees.find(e => 
       e.id !== employee.id && 
-      (e.personalNumber || '').trim() === trimmedNumber
+      String(e.personalNumber ?? '').trim() === trimmedNumber
     );
     
     if (existingEmployee) {
@@ -1082,9 +1082,9 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('all');
 
-  const searchLower = search.toLowerCase().trim();
+  const searchLower = String(search || '').toLowerCase().trim();
   const filtered = nomenclature.filter(n => {
-    const name = (n.name || '').toLowerCase();
+    const name = String(n.name ?? '').toLowerCase();
     const matchSearch = !searchLower || name.includes(searchLower);
     const matchCat = catFilter === 'all' || n.category === catFilter;
     return matchSearch && matchCat;
@@ -1675,12 +1675,12 @@ function AuditPage({ data }: { data: ReturnType<typeof useData> }) {
   const { auditLog } = data;
   const [search, setSearch] = useState('');
 
-  const searchLower = search.toLowerCase().trim();
+  const searchLower = String(search || '').toLowerCase().trim();
   const filtered = auditLog.filter(log => {
     if (!searchLower) return true;
-    const newValue = (log.newValue || '').toLowerCase();
-    const oldValue = (log.oldValue || '').toLowerCase();
-    const recordId = (log.recordId || '').toLowerCase();
+    const newValue = String(log.newValue ?? '').toLowerCase();
+    const oldValue = String(log.oldValue ?? '').toLowerCase();
+    const recordId = String(log.recordId ?? '').toLowerCase();
     return newValue.includes(searchLower) || oldValue.includes(searchLower) || recordId.includes(searchLower);
   });
 
