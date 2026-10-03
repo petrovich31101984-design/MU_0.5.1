@@ -670,15 +670,11 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
     const emp = employees.find(e => e.id === id);
     if (confirm(`УДАЛИТЬ сотрудника "${emp?.fullName}"?\n\n⚠️ Это действие нельзя отменить!\nСотрудник будет полностью удалён из базы данных.`)) {
       try {
-        console.log('Удаляем сотрудника с ID:', id);
         await gs.deleteEmployee(id);
-        console.log('Сотрудник удалён, обновляем данные...');
         await data.refresh();
-        console.log('Данные обновлены');
-        alert(`Сотрудник "${emp?.fullName}" успешно удалён`);
+        alert(`✅ Сотрудник "${emp?.fullName}" успешно удалён`);
       } catch (error) {
-        console.error('Ошибка при удалении:', error);
-        alert(`Ошибка при удалении сотрудника: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+        alert(`❌ Ошибка при удалении: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
       }
     }
   };
