@@ -677,7 +677,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   return (
     <div className="space-y-6">
       <div className="flex gap-3">
-        <input type="text" placeholder="🔍 Поиск по ФИО..." value={search} onChange={e => setSearch(e.target.value)}
+        <input type="text" placeholder="Поиск по ФИО..." value={search} onChange={e => setSearch(e.target.value)}
           className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm" />
         <button onClick={() => setShowAdd(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium shadow-sm">+ Добавить сотрудника</button>
       </div>
@@ -693,7 +693,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200 text-left bg-slate-50">
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">№</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Персональный номер</th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник (ФИО)</th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Статус</th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Действия</th>
@@ -702,7 +702,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
             <tbody>
               {filtered.map((emp, index) => (
                 <tr key={`${emp.id}-${index}`} onClick={() => setSelectedEmployee(emp)} className="border-b border-slate-100 hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer">
-                  <td className="px-5 py-3 text-sm text-slate-700">{index + 1}</td>
+                  <td className="px-5 py-3 text-sm text-slate-700">{emp.personalNumber || '-'}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white bg-blue-500">
