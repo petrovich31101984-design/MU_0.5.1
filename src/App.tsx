@@ -4,8 +4,8 @@ import * as gs from './services/googleSheets';
 // Проверка подключения
 const isConfigured = gs.isConnected();
 
-// Logo URL - use generated image
-const LOGO_URL = 'https://image.qwenlm.ai/generated-images/e1826dbe-a092-42e3-96ac-f4de0baa3505/_result.png';
+// Logo URL - из репозитория
+const LOGO_URL = 'https://raw.githubusercontent.com/petrovich31101984-design/MU_0.5.1/recover-medication-accounting-app-d0ce1/public/logo.png';
 
 // ============ ХУК ДЛЯ РАБОТЫ С ДАННЫМИ ============
 function useData() {
