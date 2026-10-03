@@ -542,14 +542,15 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex flex-wrap gap-1">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          emp.status === 'Активен' ? 'bg-emerald-100 text-emerald-700' :
-                          emp.status === 'Отпуск' ? 'bg-yellow-100 text-yellow-700' :
-                          emp.status === 'Уволен' ? 'bg-red-100 text-red-700' :
-                          'bg-slate-100 text-slate-600'
-                        }`}>{emp.status}</span>
-                        {emp.blocked && (
+                        {emp.blocked ? (
                           <span className="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-700">🔒 Заблокирован</span>
+                        ) : (
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            emp.status === 'Активен' ? 'bg-emerald-100 text-emerald-700' :
+                            emp.status === 'Отпуск' ? 'bg-yellow-100 text-yellow-700' :
+                            emp.status === 'Уволен' ? 'bg-red-100 text-red-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>{emp.status}</span>
                         )}
                       </div>
                     </td>
@@ -748,14 +749,15 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex flex-wrap gap-1">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        emp.status === 'Активен' ? 'bg-emerald-100 text-emerald-700' :
-                        emp.status === 'Отпуск' ? 'bg-yellow-100 text-yellow-700' :
-                        emp.status === 'Уволен' ? 'bg-red-100 text-red-700' :
-                        'bg-slate-100 text-slate-600'
-                      }`}>{emp.status}</span>
-                      {emp.blocked && (
+                      {emp.blocked ? (
                         <span className="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-700">🔒 Заблокирован</span>
+                      ) : (
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          emp.status === 'Активен' ? 'bg-emerald-100 text-emerald-700' :
+                          emp.status === 'Отпуск' ? 'bg-yellow-100 text-yellow-700' :
+                          emp.status === 'Уволен' ? 'bg-red-100 text-red-700' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>{emp.status}</span>
                       )}
                     </div>
                   </td>
