@@ -550,11 +550,24 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
 
 
   // Фильтруем сотрудников: не показываем уволенных (они в архиве)
+  const searchLower = search.toLowerCase().trim();
   const filtered = employees
     .filter(e => e.status !== 'Уволен')
-    .filter(e =>
-      e.fullName.toLowerCase().includes(search.toLowerCase()) || e.personalNumber.includes(search)
-    );
+    .filter(e => {
+      if (!searchLower) return true; // Если поиск пустой — показываем всех
+      
+      const fullName = (e.fullName || '').toLowerCase();
+      const personalNumber = (e.personalNumber || '').toLowerCase();
+      const position = (e.position || '').toLowerCase();
+      const phone = (e.phone || '').toLowerCase();
+      
+      return (
+        fullName.includes(searchLower) ||
+        personalNumber.includes(searchLower) ||
+        position.includes(searchLower) ||
+        phone.includes(searchLower)
+      );
+    });
 
   const getArrival = (empId: string) => arrivals.filter(a => a.employeeId === empId && a.month === currentMonth).reduce((s, a) => s + a.amount, 0);
   const getExpenseValue = (empId: string) => expenses.filter(e => e.employeeId === empId && e.month === currentMonth).reduce((s, e) => {
@@ -621,12 +634,18 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   return (
     <div className="space-y-6">
       <div className="flex gap-3">
-        <input type="text" placeholder="Поиск по ФИО или номеру..." value={search} onChange={e => setSearch(e.target.value)}
+        <input type="text" placeholder="🔍 Поиск по ФИО, номеру, должности, телефону..." value={search} onChange={e => setSearch(e.target.value)}
           className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm" />
         <button onClick={() => setShowAdd(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium shadow-sm">+ Добавить сотрудника</button>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        {search && (
+          <div className="px-5 py-3 bg-blue-50 border-b border-blue-200 text-sm text-blue-700">
+            Найдено сотрудников: <span className="font-bold">{filtered.length}</span>
+            {filtered.length === 0 && ' — попробуйте изменить запрос'}
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
