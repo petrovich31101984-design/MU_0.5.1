@@ -1,36 +1,33 @@
 /**
- * ============================================================
- * СИСТЕМА УЧЁТА ЛЕКАРСТВЕННЫХ СРЕДСТВ
- * Google Apps Script - Web App
- * ============================================================
- * 
- * Этот скрипт работает как веб-приложение и НЕ требует
- * Google Cloud Console или API ключей!
+ * Google Apps Script для системы учёта сотрудников
+ * Версия с полной поддержкой удаления сотрудников
  * 
  * ИНСТРУКЦИЯ ПО УСТАНОВКЕ:
- * 1. Создайте новую Google таблицу
+ * 1. Откройте Google Sheets
  * 2. Расширения → Apps Script
- * 3. Вставьте этот код
- * 4. Разверните как веб-приложение:
- *    - Нажмите "Развернуть" → "Новое развертывание"
- *    - Тип: "Веб-приложение"
- *    - Выполнять от имени: "Меня"
- *    - Доступ: "Все" (или "Все, у кого есть ссылка")
- *    - Нажмите "Развернуть"
- * 5. Скопируйте URL веб-приложения
- * 6. Вставьте URL в приложение для подключения
- * 
- * После развертывания выполните функцию setupDatabase()
- * для создания всех листов.
+ * 3. Удалите весь старый код
+ * 4. Вставьте этот код
+ * 5. Сохраните (Ctrl+S)
+ * 6. Разверните → Новое развертывание
+ * 7. Тип: Веб-приложение
+ * 8. Выполнять от имени: Меня
+ * 9. Доступ: Все
+ * 10. Разверните и скопируйте URL
  */
 
-// ==================== WEB APP ENDPOINTS ====================
+// ==================== ОБРАБОТКА ЗАПРОСОВ ====================
 
 function doGet(e) {
-  const action = e.parameter.action;
-  
   try {
+    const action = e.parameter.action;
+    
     switch(action) {
+      case 'test':
+        return jsonResponse({ 
+          success: true, 
+          title: SpreadsheetApp.getActiveSpreadsheet().getName(),
+          sheets: SpreadsheetApp.getActiveSpreadsheet().getSheets().map(s => s.getName())
+        });
       case 'getEmployees':
         return jsonResponse(getEmployeesData());
       case 'getNomenclature':
@@ -47,20 +44,8 @@ function doGet(e) {
         return jsonResponse(getChatData());
       case 'getAuditLog':
         return jsonResponse(getAuditLogData());
-      case 'getInitialStock':
-        return jsonResponse(getInitialStockData());
-      case 'getSettings':
-        return jsonResponse(getSettingsData());
-      case 'getReports':
-        return jsonResponse(getReportsData());
-      case 'test':
-        return jsonResponse({
-          success: true,
-          title: SpreadsheetApp.getActiveSpreadsheet().getName(),
-          sheets: SpreadsheetApp.getActiveSpreadsheet().getSheets().map(s => s.getName())
-        });
       default:
-        return jsonResponse({ error: 'Неизвестное действие: ' + action });
+        return jsonResponse({ error: 'Неизвестное действие GET: ' + action });
     }
   } catch (error) {
     return jsonResponse({ error: error.toString() });
@@ -111,6 +96,7 @@ function doPost(e) {
         return jsonResponse({ error: 'Неизвестное действие: ' + action });
     }
   } catch (error) {
+    Logger.log('Ошибка в doPost: ' + error.toString());
     return jsonResponse({ error: error.toString() });
   }
 }
@@ -149,6 +135,7 @@ function getEmployeesData() {
     'Пароль': row['Пароль (хэш)'] || ''
   }));
 }
+
 function getNomenclatureData() { return readSheetData('Номенклатура'); }
 function getPricesData() { return readSheetData('Цены'); }
 function getArrivalsData() { return readSheetData('Приход'); }
@@ -156,9 +143,6 @@ function getExpensesData() { return readSheetData('Расход'); }
 function getReturnsData() { return readSheetData('Возвраты'); }
 function getChatData() { return readSheetData('Чат'); }
 function getAuditLogData() { return readSheetData('Журнал изменений'); }
-function getInitialStockData() { return readSheetData('Начальные остатки'); }
-function getSettingsData() { return readSheetData('Настройки'); }
-function getReportsData() { return readSheetData('Отчёты'); }
 
 // ==================== ЗАПИСЬ ДАННЫХ ====================
 
@@ -192,6 +176,10 @@ function updateEmployeeRow(id, data) {
       if (data.status !== undefined) sheet.getRange(i + 1, 5).setValue(data.status);
       if (data.blocked !== undefined) sheet.getRange(i + 1, 9).setValue(data.blocked ? 'ДА' : 'НЕТ');
       if (data.note !== undefined) sheet.getRange(i + 1, 14).setValue(data.note);
+      if (data.personalNumber !== undefined) sheet.getRange(i + 1, 2).setValue(data.personalNumber);
+      if (data.fullName !== undefined) sheet.getRange(i + 1, 3).setValue(data.fullName);
+      if (data.position !== undefined) sheet.getRange(i + 1, 6).setValue(data.position);
+      if (data.phone !== undefined) sheet.getRange(i + 1, 10).setValue(data.phone);
       break;
     }
   }
@@ -214,7 +202,7 @@ function deleteEmployeeRow(id) {
   let found = false;
   for (let i = 1; i < allData.length; i++) {
     Logger.log('Проверяем строку ' + i + ': ID=' + allData[i][0] + ', ищем=' + id);
-    if (allData[i][0] === id) {
+    if (String(allData[i][0]) === String(id)) {
       Logger.log('Найдена строка для удаления: ' + i);
       const employeeName = allData[i][2];
       sheet.deleteRow(i + 1);
@@ -346,20 +334,17 @@ function updateNomenclatureRow(data) {
     }
   }
   
-  // Добавляем новую цену
   if (data.currentPrice !== undefined) {
     const pricesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Цены');
     const pricesData = pricesSheet.getDataRange().getValues();
     
-    // Закрываем старую цену
     for (let i = 1; i < pricesData.length; i++) {
       if (pricesData[i][1] === data.id && (!pricesData[i][5] || pricesData[i][5] === '')) {
-        pricesSheet.getRange(i + 1, 6).setValue(new Date()); // Дата окончания
+        pricesSheet.getRange(i + 1, 6).setValue(new Date());
         break;
       }
     }
     
-    // Добавляем новую цену
     const nomData = readSheetData('Номенклатура');
     const nom = nomData.find(n => n['ID'] === data.id);
     pricesSheet.appendRow([
@@ -399,7 +384,7 @@ function writeAudit(sheetName, recordId, action, oldValue, newValue) {
       ''
     ]);
   } catch(e) {
-    // Игнорируем ошибки журнала
+    Logger.log('Ошибка записи в журнал: ' + e.toString());
   }
 }
 
@@ -407,8 +392,6 @@ function writeAudit(sheetName, recordId, action, oldValue, newValue) {
 
 function setupDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  // Удаляем стандартный лист
   const defaultSheet = ss.getSheetByName('Sheet1') || ss.getSheetByName('Лист1');
   
   createSheet_Employees(ss);
