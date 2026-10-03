@@ -591,13 +591,14 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   // Фильтруем сотрудников
   const searchLower = search.toLowerCase().trim();
   
-  // Сначала фильтруем по статусу и поиску
+  // Сначала фильтруем по статусу и поиску (поиск по началу ФИО)
   const matched = searchLower === '' 
     ? employees.filter(e => e.status !== 'Уволен')
     : employees.filter(e => {
         if (e.status === 'Уволен') return false;
-        const fullName = String(e.fullName ?? '').toLowerCase();
-        return fullName.includes(searchLower);
+        const fullName = String(e.fullName ?? '').toLowerCase().trim();
+        // Проверяем, начинается ли ФИО с введённых букв
+        return fullName.startsWith(searchLower);
       });
   
   // Убираем дубликаты по ФИО — оставляем только первую запись с таким ФИО
