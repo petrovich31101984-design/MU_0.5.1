@@ -677,7 +677,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
           </div>
         )}
       </div>
-      {showAdd && <AddEmployeeModal employees={employees} onClose={() => setShowAdd(false)} onAdd={handleAdd} />}
+      {showAdd && <AddEmployeeModal key={Date.now()} employees={employees} onClose={() => setShowAdd(false)} onAdd={handleAdd} />}
       {selectedEmployee && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4" onClick={() => setSelectedEmployee(null)}>
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -730,16 +730,27 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
   const handleSubmit = () => {
     setError(null);
     
-    // Проверка уникальности персонального номера прямо здесь
-    const existingEmployee = employees.find(e => e.personalNumber === form.personalNumber);
+    // Проверка уникальности персонального номера
+    const trimmedNumber = form.personalNumber.trim();
+    
+    if (!trimmedNumber) {
+      setError('Персональный номер не может быть пустым');
+      return;
+    }
+    
+    // Проверка на дубликат
+    const existingEmployee = employees.find(e => {
+      const existingNumber = (e.personalNumber || '').trim();
+      return existingNumber === trimmedNumber;
+    });
+    
     if (existingEmployee) {
-      setError(`Сотрудник с персональным номером "${form.personalNumber}" уже существует (${existingEmployee.fullName})`);
+      setError(`Сотрудник с персональным номером "${trimmedNumber}" уже существует (${existingEmployee.fullName})`);
       return; // Не закрываем окно
     }
     
     const result = onAdd(form);
     if (!result) {
-      // Если onAdd вернул false — значит другая ошибка
       setError(`Не удалось добавить сотрудника`);
     }
   };
