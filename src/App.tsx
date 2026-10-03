@@ -27,6 +27,7 @@ function useData() {
         gs.getEmployees(), gs.getNomenclature(), gs.getArrivals(),
         gs.getExpenses(), gs.getReturns(), gs.getChatMessages(), gs.getAuditLog(),
       ]);
+      console.log('Загруженные сотрудники:', emps);
       setEmployees(emps); setNomenclature(noms); setArrivals(arrs);
       setExpenses(exps); setReturns(rets); setChatMessages(msgs); setAuditLog(logs);
     } catch (err) {
@@ -539,6 +540,10 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  // Отладка
+  console.log('EmployeesPage employees:', employees);
+  console.log('EmployeesPage employees с personalNumber:', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
+
   const filtered = employees.filter(e =>
     e.fullName.toLowerCase().includes(search.toLowerCase()) || e.personalNumber.includes(search)
   );
@@ -551,6 +556,24 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   const getCalls = (empId: string) => new Set(expenses.filter(e => e.employeeId === empId && e.month === currentMonth).map(e => e.callId)).size;
 
   const handleAdd = (form: { fullName: string; personalNumber: string; password: string; position: string; phone: string }) => {
+    console.log('handleAdd вызван с формой:', form);
+    console.log('Текущие employees в handleAdd:', employees);
+    console.log('Текущие employees (personalNumber) в handleAdd:', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
+    
+    // Проверка на дубликат ПЕРЕД добавлением
+    const trimmedNumber = form.personalNumber.trim();
+    const existingEmployee = employees.find(e => {
+      const existingNumber = (e.personalNumber || '').trim();
+      return existingNumber === trimmedNumber;
+    });
+    
+    console.log('Проверка дубликата в handleAdd:', existingEmployee);
+    
+    if (existingEmployee) {
+      console.log('Дубликат найден в handleAdd, не добавляем');
+      return false; // Возвращаем false, чтобы модальное окно показало ошибку
+    }
+    
     setShowAdd(false); // Закрываем окно сразу
     gs.addEmployee({
       id: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
@@ -677,7 +700,11 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
           </div>
         )}
       </div>
-      {showAdd && <AddEmployeeModal key={Date.now()} employees={employees} onClose={() => setShowAdd(false)} onAdd={handleAdd} />}
+      {showAdd && (
+        console.log('Открываю модальное окно с employees:', employees),
+        console.log('Открываю модальное окно с employees (personalNumber):', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName }))),
+        <AddEmployeeModal key={Date.now()} employees={employees} onClose={() => setShowAdd(false)} onAdd={handleAdd} />
+      )}
       {selectedEmployee && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4" onClick={() => setSelectedEmployee(null)}>
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -727,19 +754,24 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
   const [form, setForm] = useState({ fullName: '', personalNumber: '', password: '', position: 'Врач', phone: '' });
   const [error, setError] = useState<string | null>(null);
 
+  // Отладка при монтировании
+  console.log('AddEmployeeModal mounted with employees:', employees);
+  console.log('AddEmployeeModal mounted with employees (personalNumber):', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
+
   const handleSubmit = () => {
     setError(null);
     
     // Проверка уникальности персонального номера
     const trimmedNumber = form.personalNumber.trim();
     
-    console.log('Проверка дубликата:', {
-      trimmedNumber,
-      employeesCount: employees.length,
-      employees: employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName }))
-    });
+    console.log('=== ПРОВЕРКА ДУБЛИКАТА В handleSubmit ===');
+    console.log('Введённый номер:', trimmedNumber);
+    console.log('Количество сотрудников в базе:', employees.length);
+    console.log('Все сотрудники:', employees);
+    console.log('Все сотрудники (personalNumber):', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
     
     if (!trimmedNumber) {
+      console.log('Номер пустой!');
       setError('Персональный номер не может быть пустым');
       return;
     }
@@ -747,21 +779,63 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
     // Проверка на дубликат
     const existingEmployee = employees.find(e => {
       const existingNumber = (e.personalNumber || '').trim();
+      console.log(`Сравниваю: "${existingNumber}" === "${trimmedNumber}" =>`, existingNumber === trimmedNumber);
       return existingNumber === trimmedNumber;
     });
     
-    console.log('Найден дубликат:', existingEmployee);
+    console.log('Результат поиска дубликата:', existingEmployee);
     
     if (existingEmployee) {
-      setError(`Сотрудник с персональным номером "${trimmedNumber}" уже существует (${existingEmployee.fullName})`);
+      const errorMsg = `Сотрудник с персональным номером "${trimmedNumber}" уже существует (${existingEmployee.fullName})`;
+      console.log('Устанавливаю ошибку:', errorMsg);
+      setError(errorMsg);
       return; // Не закрываем окно
     }
     
+    console.log('Дубликат не найден в handleSubmit, вызываем onAdd');
     const result = onAdd(form);
+    console.log('Результат onAdd:', result);
+    
     if (!result) {
-      setError(`Не удалось добавить сотрудника`);
+      console.log('onAdd вернул false, устанавливаем ошибку');
+      // Получаем имя существующего сотрудника для сообщения
+      const existingEmp = employees.find(e => (e.personalNumber || '').trim() === trimmedNumber);
+      console.log('Найденный существующий сотрудник для ошибки:', existingEmp);
+      const errorMsg = existingEmp 
+        ? `Сотрудник с персональным номером "${trimmedNumber}" уже существует (${existingEmp.fullName})`
+        : `Сотрудник с персональным номером "${trimmedNumber}" уже существует`;
+      console.log('Сообщение об ошибке:', errorMsg);
+      setError(errorMsg);
+      console.log('Ошибка установлена, error state:', errorMsg);
+    } else {
+      console.log('onAdd вернул true, сотрудник добавлен');
     }
   };
+
+  // Отладка состояния error
+  console.log('Текущее состояние error:', error);
+  console.log('Текущее состояние error type:', typeof error);
+  console.log('Текущее состояние error truthy:', !!error);
+  
+  // Отладка рендеринга блока ошибки
+  console.log('Рендерим блок ошибки?', !!error);
+  if (error) {
+    console.log('Блок ошибки будет отображён с текстом:', error);
+  }
+  
+  // Отладка состояния form
+  console.log('Текущее состояние form:', form);
+  
+  // Отладка состояния employees
+  console.log('Текущее состояние employees в модальном окне:', employees);
+  console.log('Количество сотрудников в модальном окне:', employees.length);
+  console.log('Сотрудники с personalNumber:', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
+  
+  // Отладка рендеринга
+  console.log('=== РЕНДЕРИНГ МОДАЛЬНОГО ОКНА ===');
+  console.log('error:', error);
+  console.log('employees.length:', employees.length);
+  console.log('form:', form);
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
