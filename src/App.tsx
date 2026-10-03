@@ -551,12 +551,15 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   const getCalls = (empId: string) => new Set(expenses.filter(e => e.employeeId === empId && e.month === currentMonth).map(e => e.callId)).size;
 
   const handleAdd = async (form: { fullName: string; personalNumber: string; password: string; position: string; phone: string }) => {
-    await gs.addEmployee({
+    setShowAdd(false); // Закрываем окно сразу
+    gs.addEmployee({
       id: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
       ...form, status: 'Активен', hireDate: new Date().toISOString().split('T')[0],
       blocked: false, lastActivity: '', note: '',
+    }).then(() => data.refresh()).catch(err => {
+      console.error('Ошибка добавления сотрудника:', err);
+      alert('Ошибка при добавлении сотрудника. Попробуйте ещё раз.');
     });
-    setShowAdd(false); data.refresh();
   };
 
   const handleToggleBlock = async (id: string, block: boolean) => {
