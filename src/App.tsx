@@ -668,8 +668,14 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   // 🔒 Блокировка/разблокировка сотрудника
   const handleToggleBlock = async (id: string, block: boolean) => {
     if (confirm(block ? 'Заблокировать сотрудника?\n\nСотрудник не сможет войти в систему.' : 'Разблокировать сотрудника?')) {
-      await gs.updateEmployee(id, { blocked: block });
-      data.refresh();
+      // Обновляем локальное состояние
+      setEmployees(employees.map(e => e.id === id ? { ...e, blocked: block } : e));
+      
+      // Отправляем в Google Sheets в фоне
+      gs.updateEmployee(id, { blocked: block }).catch(err => {
+        console.error('Ошибка блокировки сотрудника:', err);
+        alert('Ошибка при блокировке сотрудника. Попробуйте ещё раз.');
+      });
     }
   };
 
