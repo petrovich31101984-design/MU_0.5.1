@@ -712,10 +712,17 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                     </div>
                   </td>
                   <td className="px-5 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      emp.status === 'Активен' ? 'bg-emerald-100 text-emerald-700' :
-                      emp.status === 'Отпуск' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-600'
-                    }`}>{emp.status}</span>
+                    <div className="flex flex-wrap gap-1">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        emp.status === 'Активен' ? 'bg-emerald-100 text-emerald-700' :
+                        emp.status === 'Отпуск' ? 'bg-yellow-100 text-yellow-700' :
+                        emp.status === 'Уволен' ? 'bg-red-100 text-red-700' :
+                        'bg-slate-100 text-slate-600'
+                      }`}>{emp.status}</span>
+                      {emp.blocked && (
+                        <span className="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-700">🔒 Заблокирован</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
@@ -759,6 +766,15 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                       </button>
                     </div>
                   </td>
+                </tr>
+              ))}
+              {/* Добавляем пустые строки до 10, если сотрудников меньше */}
+              {filtered.length < 10 && Array.from({ length: 10 - filtered.length }).map((_, i) => (
+                <tr key={`empty-${i}`} className="border-b border-slate-100">
+                  <td className="px-5 py-3 text-sm text-slate-300">-</td>
+                  <td className="px-5 py-3 text-sm text-slate-300">-</td>
+                  <td className="px-5 py-3 text-sm text-slate-300">-</td>
+                  <td className="px-5 py-3 text-sm text-slate-300">-</td>
                 </tr>
               ))}
             </tbody>
