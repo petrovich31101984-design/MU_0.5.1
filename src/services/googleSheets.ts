@@ -349,11 +349,52 @@ export async function addEmployee(employee: Partial<Employee>): Promise<void> {
 }
 
 export async function updateEmployee(id: string, data: Partial<Employee>): Promise<void> {
-  await postData('updateEmployee', { id, data });
+  const config = getConfig();
+  if (!config.scriptUrl) {
+    throw new Error('Не настроено подключение');
+  }
+
+  const response = await fetch(config.scriptUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'updateEmployee', id: id, data: data }),
+    redirect: 'follow'
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  
+  const result = await response.json();
+  
+  if (result.error) {
+    throw new Error(result.error);
+  }
 }
 
 export async function deleteEmployee(id: string): Promise<void> {
-  await postData('deleteEmployee', { id });
+  // Отправляем ID напрямую, без обёртки
+  const config = getConfig();
+  if (!config.scriptUrl) {
+    throw new Error('Не настроено подключение');
+  }
+
+  const response = await fetch(config.scriptUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'deleteEmployee', id: id }),
+    redirect: 'follow'
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  
+  const result = await response.json();
+  
+  if (result.error) {
+    throw new Error(result.error);
+  }
 }
 
 export async function addArrival(arrival: Partial<Arrival>): Promise<void> {
