@@ -733,6 +733,12 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
     // Проверка уникальности персонального номера
     const trimmedNumber = form.personalNumber.trim();
     
+    console.log('Проверка дубликата:', {
+      trimmedNumber,
+      employeesCount: employees.length,
+      employees: employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName }))
+    });
+    
     if (!trimmedNumber) {
       setError('Персональный номер не может быть пустым');
       return;
@@ -743,6 +749,8 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
       const existingNumber = (e.personalNumber || '').trim();
       return existingNumber === trimmedNumber;
     });
+    
+    console.log('Найден дубликат:', existingEmployee);
     
     if (existingEmployee) {
       setError(`Сотрудник с персональным номером "${trimmedNumber}" уже существует (${existingEmployee.fullName})`);
@@ -763,9 +771,12 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
         </div>
         <div className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
-              <span>⚠️</span>
-              <span>{error}</span>
+            <div className="p-4 bg-red-50 border-2 border-red-300 rounded-lg text-sm text-red-700 flex items-start gap-3">
+              <span className="text-xl flex-shrink-0">⚠️</span>
+              <div className="flex-1">
+                <div className="font-semibold mb-1">Ошибка добавления</div>
+                <div>{error}</div>
+              </div>
             </div>
           )}
           <div>
@@ -775,8 +786,22 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
           </div>
           <div>
             <label className="text-sm text-slate-600 mb-1 block">Персональный номер *</label>
-            <input type="text" value={form.personalNumber} onChange={e => { setForm({ ...form, personalNumber: e.target.value }); setError(null); }}
-              className={`w-full px-3 py-2 bg-white border rounded-lg text-slate-800 focus:outline-none focus:ring-2 ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'}`} />
+            <input 
+              type="text" 
+              value={form.personalNumber} 
+              onChange={e => { setForm({ ...form, personalNumber: e.target.value }); setError(null); }}
+              className={`w-full px-3 py-2 bg-white border-2 rounded-lg text-slate-800 focus:outline-none focus:ring-2 transition-all ${
+                error 
+                  ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30 bg-red-50' 
+                  : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'
+              }`} 
+            />
+            {error && (
+              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                <span>⚠️</span>
+                <span>Проверьте персональный номер</span>
+              </p>
+            )}
           </div>
           <div>
             <label className="text-sm text-slate-600 mb-1 block">Пароль *</label>
