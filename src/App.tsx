@@ -589,21 +589,19 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
 
 
   // Фильтруем сотрудников: не показываем уволенных (они в архиве)
-  // Убираем дубликаты по комбинации ФИО + персональный номер
+  // Убираем дубликаты по ФИО
   const searchLower = String(search || '').toLowerCase().trim();
-  const uniqueEmployees = employees.filter((e, index, self) => {
-    const key = `${String(e.fullName ?? '').trim().toLowerCase()}_${String(e.personalNumber ?? '').trim()}`;
-    return index === self.findIndex(t => {
-      const tKey = `${String(t.fullName ?? '').trim().toLowerCase()}_${String(t.personalNumber ?? '').trim()}`;
-      return tKey === key;
-    });
-  });
-  const filtered = uniqueEmployees
+  const filtered = employees
     .filter(e => e.status !== 'Уволен')
     .filter(e => {
       if (!searchLower) return true;
       return String(e.fullName ?? '').toLowerCase().includes(searchLower);
-    });
+    })
+    .filter((e, index, self) => 
+      index === self.findIndex(t => 
+        String(t.fullName ?? '').trim().toLowerCase() === String(e.fullName ?? '').trim().toLowerCase()
+      )
+    );
 
   const getArrival = (empId: string) => arrivals.filter(a => a.employeeId === empId && a.month === currentMonth).reduce((s, a) => s + a.amount, 0);
   const getExpenseValue = (empId: string) => expenses.filter(e => e.employeeId === empId && e.month === currentMonth).reduce((s, e) => {
