@@ -632,14 +632,31 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
     }
     
     setShowAdd(false); // Закрываем окно сразу
-    gs.addEmployee({
+    
+    // Создаём нового сотрудника
+    const newEmployee: gs.Employee = {
       id: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
-      ...form, status: 'Активен', hireDate: new Date().toISOString().split('T')[0],
-      blocked: false, lastActivity: '', note: '',
-    }).then(() => data.refresh()).catch(err => {
+      personalNumber: form.personalNumber,
+      fullName: form.fullName,
+      password: form.password,
+      status: 'Активен',
+      position: form.position,
+      hireDate: new Date().toISOString().split('T')[0],
+      blocked: false,
+      phone: form.phone,
+      lastActivity: '',
+      note: '',
+    };
+    
+    // Добавляем в локальное состояние
+    setEmployees([...employees, newEmployee]);
+    
+    // Отправляем в Google Sheets в фоне
+    gs.addEmployee(newEmployee).catch(err => {
       console.error('Ошибка добавления сотрудника:', err);
       alert('Ошибка при добавлении сотрудника. Попробуйте ещё раз.');
     });
+    
     return true;
   };
 
