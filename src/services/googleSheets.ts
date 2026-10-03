@@ -108,6 +108,8 @@ async function postData(action: string, data: any): Promise<void> {
     throw new Error('Не настроено подключение');
   }
 
+  console.log(`Отправляем POST запрос: action=${action}, data=`, data);
+  
   try {
     const response = await fetch(config.scriptUrl, {
       method: 'POST',
@@ -115,11 +117,15 @@ async function postData(action: string, data: any): Promise<void> {
       body: JSON.stringify({ action, data })
     });
     
+    console.log(`Получен ответ: status=${response.status}, ok=${response.ok}`);
+    
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
     
     const result = await response.json();
+    console.log(`Результат:`, result);
+    
     if (result.error) {
       throw new Error(result.error);
     }
@@ -352,7 +358,14 @@ export async function updateEmployee(id: string, data: Partial<Employee>): Promi
 }
 
 export async function deleteEmployee(id: string): Promise<void> {
-  await postData('deleteEmployee', { id });
+  console.log('Вызываем deleteEmployee для ID:', id);
+  try {
+    await postData('deleteEmployee', { id });
+    console.log('deleteEmployee выполнен успешно');
+  } catch (error) {
+    console.error('Ошибка в deleteEmployee:', error);
+    throw error;
+  }
 }
 
 export async function addArrival(arrival: Partial<Arrival>): Promise<void> {

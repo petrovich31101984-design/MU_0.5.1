@@ -69,8 +69,10 @@ function doGet(e) {
 
 function doPost(e) {
   try {
+    Logger.log('doPost получен: ' + e.postData.contents);
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
+    Logger.log('Действие: ' + action);
     
     switch(action) {
       case 'addEmployee':
@@ -80,7 +82,9 @@ function doPost(e) {
         updateEmployeeRow(data.id, data.data);
         return jsonResponse({ success: true });
       case 'deleteEmployee':
+        Logger.log('Вызываем deleteEmployeeRow для ID: ' + data.id);
         deleteEmployeeRow(data.id);
+        Logger.log('deleteEmployeeRow выполнен успешно');
         return jsonResponse({ success: true });
       case 'addArrival':
         addArrivalRow(data.data);
@@ -196,15 +200,34 @@ function updateEmployeeRow(id, data) {
 }
 
 function deleteEmployeeRow(id) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
-  const allData = sheet.getDataRange().getValues();
+  Logger.log('deleteEmployeeRow вызван для ID: ' + id);
   
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
+  if (!sheet) {
+    Logger.log('Лист "Сотрудники" не найден!');
+    throw new Error('Лист "Сотрудники" не найден');
+  }
+  
+  const allData = sheet.getDataRange().getValues();
+  Logger.log('Всего строк в таблице: ' + allData.length);
+  
+  let found = false;
   for (let i = 1; i < allData.length; i++) {
+    Logger.log('Проверяем строку ' + i + ': ID=' + allData[i][0] + ', ищем=' + id);
     if (allData[i][0] === id) {
+      Logger.log('Найдена строка для удаления: ' + i);
+      const employeeName = allData[i][2];
       sheet.deleteRow(i + 1);
-      writeAudit('Сотрудники', id, 'Удаление', 'Сотрудник: ' + allData[i][2], '');
+      writeAudit('Сотрудники', id, 'Удаление', 'Сотрудник: ' + employeeName, '');
+      Logger.log('Строка удалена успешно');
+      found = true;
       break;
     }
+  }
+  
+  if (!found) {
+    Logger.log('Сотрудник с ID ' + id + ' не найден в таблице!');
+    throw new Error('Сотрудник с ID ' + id + ' не найден');
   }
 }
 
