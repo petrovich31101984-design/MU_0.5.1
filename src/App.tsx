@@ -550,7 +550,13 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   }, 0);
   const getCalls = (empId: string) => new Set(expenses.filter(e => e.employeeId === empId && e.month === currentMonth).map(e => e.callId)).size;
 
-  const handleAdd = async (form: { fullName: string; personalNumber: string; password: string; position: string; phone: string }) => {
+  const handleAdd = (form: { fullName: string; personalNumber: string; password: string; position: string; phone: string }) => {
+    // Проверка уникальности персонального номера
+    const existingEmployee = employees.find(e => e.personalNumber === form.personalNumber);
+    if (existingEmployee) {
+      return false; // Возвращаем false — окно не закроется, покажет ошибку
+    }
+    
     setShowAdd(false); // Закрываем окно сразу
     gs.addEmployee({
       id: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
@@ -560,6 +566,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
       console.error('Ошибка добавления сотрудника:', err);
       alert('Ошибка при добавлении сотрудника. Попробуйте ещё раз.');
     });
+    return true;
   };
 
   const handleToggleBlock = async (id: string, block: boolean) => {
@@ -722,8 +729,19 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   );
 }
 
-function AddEmployeeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (form: any) => void }) {
+function AddEmployeeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (form: any) => boolean }) {
   const [form, setForm] = useState({ fullName: '', personalNumber: '', password: '', position: 'Врач', phone: '' });
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = () => {
+    setError(null);
+    const result = onAdd(form);
+    if (!result) {
+      // Если onAdd вернул false — значит дубликат, окно не закрываем
+      setError(`Сотрудник с персональным номером "${form.personalNumber}" уже существует`);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl">
@@ -731,15 +749,21 @@ function AddEmployeeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (for
           <h3 className="text-lg font-bold text-slate-800">Добавить сотрудника</h3>
         </div>
         <div className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
           <div>
             <label className="text-sm text-slate-600 mb-1 block">ФИО *</label>
-            <input type="text" value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })}
+            <input type="text" value={form.fullName} onChange={e => { setForm({ ...form, fullName: e.target.value }); setError(null); }}
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
           </div>
           <div>
             <label className="text-sm text-slate-600 mb-1 block">Персональный номер *</label>
-            <input type="text" value={form.personalNumber} onChange={e => setForm({ ...form, personalNumber: e.target.value })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+            <input type="text" value={form.personalNumber} onChange={e => { setForm({ ...form, personalNumber: e.target.value }); setError(null); }}
+              className={`w-full px-3 py-2 bg-white border rounded-lg text-slate-800 focus:outline-none focus:ring-2 ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'}`} />
           </div>
           <div>
             <label className="text-sm text-slate-600 mb-1 block">Пароль *</label>
@@ -761,7 +785,7 @@ function AddEmployeeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (for
         </div>
         <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
-          <button onClick={() => onAdd(form)} disabled={!form.fullName || !form.personalNumber || !form.password}
+          <button onClick={handleSubmit} disabled={!form.fullName || !form.personalNumber || !form.password}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium">Добавить</button>
         </div>
       </div>
