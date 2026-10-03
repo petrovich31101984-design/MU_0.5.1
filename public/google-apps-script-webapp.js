@@ -64,11 +64,11 @@ function doPost(e) {
         addEmployeeRow(data.data);
         return jsonResponse({ success: true });
       case 'updateEmployee':
-        updateEmployeeRow(data.id, data.data);
+        updateEmployeeRow(data.data.id, data.data.data);
         return jsonResponse({ success: true });
       case 'deleteEmployee':
-        Logger.log('Вызываем deleteEmployeeRow для ID: ' + data.id);
-        deleteEmployeeRow(data.id);
+        Logger.log('Вызываем deleteEmployeeRow для ID: ' + data.data.id);
+        deleteEmployeeRow(data.data.id);
         Logger.log('deleteEmployeeRow выполнен успешно');
         return jsonResponse({ success: true });
       case 'addArrival':
