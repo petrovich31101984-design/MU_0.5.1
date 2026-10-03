@@ -677,8 +677,14 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   const handleFire = async (id: string) => {
     const emp = employees.find(e => e.id === id);
     if (confirm(`Уволить сотрудника "${emp?.fullName}"?\n\nСотрудник будет перемещён в архив.\nПерсональный номер "${emp?.personalNumber}" будет освобождён.`)) {
-      await gs.updateEmployee(id, { status: 'Уволен', personalNumber: '' });
-      data.refresh();
+      // Обновляем локальное состояние
+      setEmployees(employees.map(e => e.id === id ? { ...e, status: 'Уволен', personalNumber: '' } : e));
+      
+      // Отправляем в Google Sheets в фоне
+      gs.updateEmployee(id, { status: 'Уволен', personalNumber: '' }).catch(err => {
+        console.error('Ошибка увольнения сотрудника:', err);
+        alert('Ошибка при увольнении сотрудника. Попробуйте ещё раз.');
+      });
     }
   };
 
