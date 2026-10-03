@@ -578,7 +578,7 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
 
 // ============ СОТРУДНИКИ ============
 function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, arrivals, expenses, nomenclature } = data;
+  const { employees, setEmployees, arrivals, expenses, nomenclature } = data;
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<gs.Employee | null>(null);
@@ -671,7 +671,8 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
     if (confirm(`УДАЛИТЬ сотрудника "${emp?.fullName}"?\n\n⚠️ Это действие нельзя отменить!\nСотрудник будет полностью удалён из базы данных.`)) {
       try {
         await gs.deleteEmployee(id);
-        await data.refresh();
+        // Удаляем из локального состояния без обновления данных
+        data.setEmployees(employees.filter(e => e.id !== id));
         alert(`✅ Сотрудник "${emp?.fullName}" успешно удалён`);
       } catch (error) {
         alert(`❌ Ошибка при удалении: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
