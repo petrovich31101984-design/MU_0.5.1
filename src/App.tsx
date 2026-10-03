@@ -588,25 +588,28 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
 
 
 
-  // Фильтруем сотрудников: не показываем уволенных (они в архиве)
-  // Убираем дубликаты по ФИО
-  const searchLower = String(search || '').toLowerCase().trim();
+  // Фильтруем сотрудников
+  const searchLower = search.toLowerCase().trim();
   
-  // Сначала убираем дубликаты по ФИО
-  const uniqueByFullName = new Map<string, typeof employees[0]>();
-  employees.forEach(e => {
-    const fullNameKey = String(e.fullName ?? '').trim().toLowerCase();
-    if (!uniqueByFullName.has(fullNameKey)) {
-      uniqueByFullName.set(fullNameKey, e);
+  // Сначала фильтруем по статусу и поиску
+  const matched = searchLower === '' 
+    ? employees.filter(e => e.status !== 'Уволен')
+    : employees.filter(e => {
+        if (e.status === 'Уволен') return false;
+        const fullName = String(e.fullName ?? '').toLowerCase();
+        return fullName.includes(searchLower);
+      });
+  
+  // Убираем дубликаты по ФИО — оставляем только первую запись с таким ФИО
+  const seen = new Set<string>();
+  const filtered = matched.filter(e => {
+    const fullName = String(e.fullName ?? '').trim().toLowerCase();
+    if (seen.has(fullName)) {
+      return false;
     }
+    seen.add(fullName);
+    return true;
   });
-  
-  const filtered = Array.from(uniqueByFullName.values())
-    .filter(e => e.status !== 'Уволен')
-    .filter(e => {
-      if (!searchLower) return true;
-      return String(e.fullName ?? '').toLowerCase().includes(searchLower);
-    });
 
   const getArrival = (empId: string) => arrivals.filter(a => a.employeeId === empId && a.month === currentMonth).reduce((s, a) => s + a.amount, 0);
   const getExpenseValue = (empId: string) => expenses.filter(e => e.employeeId === empId && e.month === currentMonth).reduce((s, e) => {
@@ -697,7 +700,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
             </thead>
             <tbody>
               {filtered.map((emp, index) => (
-                <tr key={emp.id} onClick={() => setSelectedEmployee(emp)} className="border-b border-slate-100 hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer">
+                <tr key={`${emp.id}-${index}`} onClick={() => setSelectedEmployee(emp)} className="border-b border-slate-100 hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer">
                   <td className="px-5 py-3 text-sm text-slate-700">{index + 1}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
