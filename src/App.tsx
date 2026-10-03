@@ -551,12 +551,6 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   const getCalls = (empId: string) => new Set(expenses.filter(e => e.employeeId === empId && e.month === currentMonth).map(e => e.callId)).size;
 
   const handleAdd = (form: { fullName: string; personalNumber: string; password: string; position: string; phone: string }) => {
-    // Проверка уникальности персонального номера
-    const existingEmployee = employees.find(e => e.personalNumber === form.personalNumber);
-    if (existingEmployee) {
-      return false; // Возвращаем false — окно не закроется, покажет ошибку
-    }
-    
     setShowAdd(false); // Закрываем окно сразу
     gs.addEmployee({
       id: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
@@ -683,7 +677,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
           </div>
         )}
       </div>
-      {showAdd && <AddEmployeeModal onClose={() => setShowAdd(false)} onAdd={handleAdd} />}
+      {showAdd && <AddEmployeeModal employees={employees} onClose={() => setShowAdd(false)} onAdd={handleAdd} />}
       {selectedEmployee && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4" onClick={() => setSelectedEmployee(null)}>
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -729,16 +723,24 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   );
 }
 
-function AddEmployeeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (form: any) => boolean }) {
+function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employee[]; onClose: () => void; onAdd: (form: any) => boolean }) {
   const [form, setForm] = useState({ fullName: '', personalNumber: '', password: '', position: 'Врач', phone: '' });
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = () => {
     setError(null);
+    
+    // Проверка уникальности персонального номера прямо здесь
+    const existingEmployee = employees.find(e => e.personalNumber === form.personalNumber);
+    if (existingEmployee) {
+      setError(`Сотрудник с персональным номером "${form.personalNumber}" уже существует (${existingEmployee.fullName})`);
+      return; // Не закрываем окно
+    }
+    
     const result = onAdd(form);
     if (!result) {
-      // Если onAdd вернул false — значит дубликат, окно не закрываем
-      setError(`Сотрудник с персональным номером "${form.personalNumber}" уже существует`);
+      // Если onAdd вернул false — значит другая ошибка
+      setError(`Не удалось добавить сотрудника`);
     }
   };
 
