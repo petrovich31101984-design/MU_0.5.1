@@ -27,7 +27,6 @@ function useData() {
         gs.getEmployees(), gs.getNomenclature(), gs.getArrivals(),
         gs.getExpenses(), gs.getReturns(), gs.getChatMessages(), gs.getAuditLog(),
       ]);
-      console.log('Загруженные сотрудники:', emps);
       setEmployees(emps); setNomenclature(noms); setArrivals(arrs);
       setExpenses(exps); setReturns(rets); setChatMessages(msgs); setAuditLog(logs);
     } catch (err) {
@@ -503,10 +502,17 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
                       </div>
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        emp.status === 'Активен' ? 'bg-emerald-100 text-emerald-700' :
-                        emp.status === 'Отпуск' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-600'
-                      }`}>{emp.status}</span>
+                      <div className="flex flex-wrap gap-1">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          emp.status === 'Активен' ? 'bg-emerald-100 text-emerald-700' :
+                          emp.status === 'Отпуск' ? 'bg-yellow-100 text-yellow-700' :
+                          emp.status === 'Уволен' ? 'bg-red-100 text-red-700' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>{emp.status}</span>
+                        {emp.blocked && (
+                          <span className="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-700">🔒 Заблокирован</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-3 text-right text-sm text-emerald-600">{arr.toLocaleString('ru-RU')} ₽</td>
                     <td className="px-5 py-3 text-right text-sm text-red-600">{exp.toLocaleString('ru-RU')} ₽</td>
@@ -536,17 +542,19 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   const { employees, arrivals, expenses, nomenclature } = data;
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<gs.Employee | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<gs.Employee | null>(null);
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  // Отладка
-  console.log('EmployeesPage employees:', employees);
-  console.log('EmployeesPage employees с personalNumber:', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
 
-  const filtered = employees.filter(e =>
-    e.fullName.toLowerCase().includes(search.toLowerCase()) || e.personalNumber.includes(search)
-  );
+
+  // Фильтруем сотрудников: не показываем уволенных (они в архиве)
+  const filtered = employees
+    .filter(e => e.status !== 'Уволен')
+    .filter(e =>
+      e.fullName.toLowerCase().includes(search.toLowerCase()) || e.personalNumber.includes(search)
+    );
 
   const getArrival = (empId: string) => arrivals.filter(a => a.employeeId === empId && a.month === currentMonth).reduce((s, a) => s + a.amount, 0);
   const getExpenseValue = (empId: string) => expenses.filter(e => e.employeeId === empId && e.month === currentMonth).reduce((s, e) => {
@@ -556,10 +564,6 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   const getCalls = (empId: string) => new Set(expenses.filter(e => e.employeeId === empId && e.month === currentMonth).map(e => e.callId)).size;
 
   const handleAdd = (form: { fullName: string; personalNumber: string; password: string; position: string; phone: string }) => {
-    console.log('handleAdd вызван с формой:', form);
-    console.log('Текущие employees в handleAdd:', employees);
-    console.log('Текущие employees (personalNumber) в handleAdd:', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
-    
     // Проверка на дубликат ПЕРЕД добавлением
     const trimmedNumber = form.personalNumber.trim();
     const existingEmployee = employees.find(e => {
@@ -567,10 +571,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
       return existingNumber === trimmedNumber;
     });
     
-    console.log('Проверка дубликата в handleAdd:', existingEmployee);
-    
     if (existingEmployee) {
-      console.log('Дубликат найден в handleAdd, не добавляем');
       return false; // Возвращаем false, чтобы модальное окно показало ошибку
     }
     
@@ -586,22 +587,32 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
     return true;
   };
 
+  // ✏️ Редактирование данных сотрудника
+  const handleEdit = (emp: gs.Employee) => {
+    setEditingEmployee(emp);
+  };
+
+  // 🔒 Блокировка/разблокировка сотрудника
   const handleToggleBlock = async (id: string, block: boolean) => {
-    if (confirm(block ? 'Заблокировать сотрудника?' : 'Разблокировать сотрудника?')) {
+    if (confirm(block ? 'Заблокировать сотрудника?\n\nСотрудник не сможет войти в систему.' : 'Разблокировать сотрудника?')) {
       await gs.updateEmployee(id, { blocked: block });
       data.refresh();
     }
   };
 
+  // 🚫 Увольнение — сотрудник уходит в архив, персональный номер освобождается
   const handleFire = async (id: string) => {
-    if (confirm('Уволить сотрудника? Сотрудник будет перемещен в архив.')) {
-      await gs.updateEmployee(id, { status: 'Уволен' });
+    const emp = employees.find(e => e.id === id);
+    if (confirm(`Уволить сотрудника "${emp?.fullName}"?\n\nСотрудник будет перемещён в архив.\nПерсональный номер "${emp?.personalNumber}" будет освобождён.`)) {
+      await gs.updateEmployee(id, { status: 'Уволен', personalNumber: '' });
       data.refresh();
     }
   };
 
+  // 🗑️ Полное удаление из базы данных
   const handleDelete = async (id: string) => {
-    if (confirm('Удалить сотрудника? Это действие нельзя отменить.')) {
+    const emp = employees.find(e => e.id === id);
+    if (confirm(`УДАЛИТЬ сотрудника "${emp?.fullName}"?\n\n⚠️ Это действие нельзя отменить!\nСотрудник будет полностью удалён из базы данных.`)) {
       await gs.deleteEmployee(id);
       data.refresh();
     }
@@ -647,9 +658,9 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
                       <button 
-                        onClick={(e) => { e.stopPropagation(); }}
+                        onClick={(e) => { e.stopPropagation(); handleEdit(emp); }}
                         className="text-blue-600 hover:text-blue-800 text-lg"
-                        title="Редактировать"
+                        title="✏️ Редактировать данные сотрудника"
                       >
                         ✏️
                       </button>
@@ -657,7 +668,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleToggleBlock(emp.id, false); }}
                           className="text-green-600 hover:text-green-800 text-lg"
-                          title="Разблокировать"
+                          title="🔓 Разблокировать сотрудника"
                         >
                           🔓
                         </button>
@@ -665,24 +676,22 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleToggleBlock(emp.id, true); }}
                           className="text-orange-600 hover:text-orange-800 text-lg"
-                          title="Заблокировать"
+                          title="🔒 Заблокировать сотрудника (например, потерял телефон)"
                         >
                           🔒
                         </button>
                       )}
-                      {emp.status !== 'Уволен' && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleFire(emp.id); }}
-                          className="text-red-600 hover:text-red-800 text-lg"
-                          title="Уволить"
-                        >
-                          🚫
-                        </button>
-                      )}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleFire(emp.id); }}
+                        className="text-red-600 hover:text-red-800 text-lg"
+                        title="🚫 Уволить (переместить в архив, освободить персональный номер)"
+                      >
+                        🚫
+                      </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleDelete(emp.id); }}
                         className="text-gray-600 hover:text-gray-800 text-lg"
-                        title="Удалить"
+                        title="🗑️ Удалить из базы данных (безвозвратно)"
                       >
                         🗑️
                       </button>
@@ -701,9 +710,19 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
         )}
       </div>
       {showAdd && (
-        console.log('Открываю модальное окно с employees:', employees),
-        console.log('Открываю модальное окно с employees (personalNumber):', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName }))),
         <AddEmployeeModal key={Date.now()} employees={employees} onClose={() => setShowAdd(false)} onAdd={handleAdd} />
+      )}
+      {editingEmployee && (
+        <EditEmployeeModal 
+          employee={editingEmployee}
+          employees={employees}
+          onClose={() => setEditingEmployee(null)} 
+          onSave={async (id, updates) => {
+            await gs.updateEmployee(id, updates);
+            setEditingEmployee(null);
+            data.refresh();
+          }}
+        />
       )}
       {selectedEmployee && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4" onClick={() => setSelectedEmployee(null)}>
@@ -754,24 +773,13 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
   const [form, setForm] = useState({ fullName: '', personalNumber: '', password: '', position: 'Врач', phone: '' });
   const [error, setError] = useState<string | null>(null);
 
-  // Отладка при монтировании
-  console.log('AddEmployeeModal mounted with employees:', employees);
-  console.log('AddEmployeeModal mounted with employees (personalNumber):', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
-
   const handleSubmit = () => {
     setError(null);
     
     // Проверка уникальности персонального номера
     const trimmedNumber = form.personalNumber.trim();
     
-    console.log('=== ПРОВЕРКА ДУБЛИКАТА В handleSubmit ===');
-    console.log('Введённый номер:', trimmedNumber);
-    console.log('Количество сотрудников в базе:', employees.length);
-    console.log('Все сотрудники:', employees);
-    console.log('Все сотрудники (personalNumber):', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
-    
     if (!trimmedNumber) {
-      console.log('Номер пустой!');
       setError('Персональный номер не может быть пустым');
       return;
     }
@@ -779,63 +787,26 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
     // Проверка на дубликат
     const existingEmployee = employees.find(e => {
       const existingNumber = (e.personalNumber || '').trim();
-      console.log(`Сравниваю: "${existingNumber}" === "${trimmedNumber}" =>`, existingNumber === trimmedNumber);
       return existingNumber === trimmedNumber;
     });
     
-    console.log('Результат поиска дубликата:', existingEmployee);
-    
     if (existingEmployee) {
       const errorMsg = `Сотрудник с персональным номером "${trimmedNumber}" уже существует (${existingEmployee.fullName})`;
-      console.log('Устанавливаю ошибку:', errorMsg);
       setError(errorMsg);
       return; // Не закрываем окно
     }
     
-    console.log('Дубликат не найден в handleSubmit, вызываем onAdd');
     const result = onAdd(form);
-    console.log('Результат onAdd:', result);
     
     if (!result) {
-      console.log('onAdd вернул false, устанавливаем ошибку');
       // Получаем имя существующего сотрудника для сообщения
       const existingEmp = employees.find(e => (e.personalNumber || '').trim() === trimmedNumber);
-      console.log('Найденный существующий сотрудник для ошибки:', existingEmp);
       const errorMsg = existingEmp 
         ? `Сотрудник с персональным номером "${trimmedNumber}" уже существует (${existingEmp.fullName})`
         : `Сотрудник с персональным номером "${trimmedNumber}" уже существует`;
-      console.log('Сообщение об ошибке:', errorMsg);
       setError(errorMsg);
-      console.log('Ошибка установлена, error state:', errorMsg);
-    } else {
-      console.log('onAdd вернул true, сотрудник добавлен');
     }
   };
-
-  // Отладка состояния error
-  console.log('Текущее состояние error:', error);
-  console.log('Текущее состояние error type:', typeof error);
-  console.log('Текущее состояние error truthy:', !!error);
-  
-  // Отладка рендеринга блока ошибки
-  console.log('Рендерим блок ошибки?', !!error);
-  if (error) {
-    console.log('Блок ошибки будет отображён с текстом:', error);
-  }
-  
-  // Отладка состояния form
-  console.log('Текущее состояние form:', form);
-  
-  // Отладка состояния employees
-  console.log('Текущее состояние employees в модальном окне:', employees);
-  console.log('Количество сотрудников в модальном окне:', employees.length);
-  console.log('Сотрудники с personalNumber:', employees.map(e => ({ id: e.id, personalNumber: e.personalNumber, fullName: e.fullName })));
-  
-  // Отладка рендеринга
-  console.log('=== РЕНДЕРИНГ МОДАЛЬНОГО ОКНА ===');
-  console.log('error:', error);
-  console.log('employees.length:', employees.length);
-  console.log('form:', form);
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
@@ -899,6 +870,148 @@ function AddEmployeeModal({ employees, onClose, onAdd }: { employees: gs.Employe
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
           <button onClick={handleSubmit} disabled={!form.fullName || !form.personalNumber || !form.password}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium">Добавить</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ РЕДАКТИРОВАНИЕ СОТРУДНИКА ============
+function EditEmployeeModal({ 
+  employee, 
+  employees,
+  onClose, 
+  onSave 
+}: { 
+  employee: gs.Employee;
+  employees: gs.Employee[];
+  onClose: () => void; 
+  onSave: (id: string, updates: Partial<gs.Employee>) => void 
+}) {
+  const [form, setForm] = useState({
+    fullName: employee.fullName,
+    personalNumber: employee.personalNumber,
+    position: employee.position,
+    phone: employee.phone,
+    note: employee.note,
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = () => {
+    setError(null);
+    
+    // Проверка уникальности персонального номера (исключая текущего сотрудника)
+    const trimmedNumber = form.personalNumber.trim();
+    
+    if (!trimmedNumber) {
+      setError('Персональный номер не может быть пустым');
+      return;
+    }
+    
+    const existingEmployee = employees.find(e => 
+      e.id !== employee.id && 
+      (e.personalNumber || '').trim() === trimmedNumber
+    );
+    
+    if (existingEmployee) {
+      setError(`Персональный номер "${trimmedNumber}" уже используется сотрудником "${existingEmployee.fullName}"`);
+      return;
+    }
+    
+    onSave(employee.id, {
+      fullName: form.fullName,
+      personalNumber: trimmedNumber,
+      position: form.position,
+      phone: form.phone,
+      note: form.note,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-800">✏️ Редактирование сотрудника</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+        </div>
+        <div className="p-6 space-y-4">
+          {error && (
+            <div className="p-4 bg-red-50 border-2 border-red-300 rounded-lg text-sm text-red-700 flex items-start gap-3">
+              <span className="text-xl flex-shrink-0">⚠️</span>
+              <div className="flex-1">
+                <div className="font-semibold mb-1">Ошибка</div>
+                <div>{error}</div>
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">ФИО *</label>
+            <input 
+              type="text" 
+              value={form.fullName} 
+              onChange={e => { setForm({ ...form, fullName: e.target.value }); setError(null); }}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" 
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Персональный номер *</label>
+            <input 
+              type="text" 
+              value={form.personalNumber} 
+              onChange={e => { setForm({ ...form, personalNumber: e.target.value }); setError(null); }}
+              className={`w-full px-3 py-2 bg-white border-2 rounded-lg text-slate-800 focus:outline-none focus:ring-2 transition-all ${
+                error 
+                  ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30 bg-red-50' 
+                  : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'
+              }`} 
+            />
+            {error && (
+              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                <span>⚠️</span>
+                <span>Проверьте персональный номер</span>
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Должность *</label>
+            <select 
+              value={form.position} 
+              onChange={e => setForm({ ...form, position: e.target.value })}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
+            >
+              <option>Врач</option>
+              <option>Фельдшер</option>
+              <option>Медсестра</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Телефон</label>
+            <input 
+              type="text" 
+              value={form.phone} 
+              onChange={e => setForm({ ...form, phone: e.target.value })}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" 
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Примечание</label>
+            <textarea 
+              value={form.note} 
+              onChange={e => setForm({ ...form, note: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none" 
+            />
+          </div>
+        </div>
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
+          <button 
+            onClick={handleSubmit} 
+            disabled={!form.fullName || !form.personalNumber || !form.position}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium"
+          >
+            💾 Сохранить
+          </button>
         </div>
       </div>
     </div>
