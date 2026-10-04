@@ -1169,10 +1169,13 @@ function AddNomenclatureModal({
     name: '',
     category: 'ЛС ПКУ',
     unit: 'Штуки',
-    manufacturer: '',
-    currentPrice: 0,
+    packageQuantity: 1,
+    pricePerPackage: 0,
   });
   const [error, setError] = useState<string | null>(null);
+
+  // Автоматический расчет цены за единицу
+  const pricePerUnit = form.packageQuantity > 0 ? form.pricePerPackage / form.packageQuantity : 0;
 
   const handleSubmit = async () => {
     setError(null);
@@ -1182,8 +1185,13 @@ function AddNomenclatureModal({
       return;
     }
     
-    if (form.currentPrice <= 0) {
-      setError('Цена должна быть больше 0');
+    if (form.pricePerPackage <= 0) {
+      setError('Цена за упаковку должна быть больше 0');
+      return;
+    }
+    
+    if (form.packageQuantity <= 0) {
+      setError('Количество в упаковке должно быть больше 0');
       return;
     }
     
@@ -1192,9 +1200,9 @@ function AddNomenclatureModal({
       name: form.name.trim(),
       category: form.category,
       unit: form.unit,
-      manufacturer: form.manufacturer.trim(),
+      manufacturer: '',
       active: true,
-      currentPrice: form.currentPrice,
+      currentPrice: pricePerUnit,
     });
   };
 
@@ -1253,33 +1261,42 @@ function AddNomenclatureModal({
             </select>
           </div>
           <div>
-            <label className="text-sm text-slate-600 mb-1 block">Производитель</label>
+            <label className="text-sm text-slate-600 mb-1 block">Количество в упаковке *</label>
             <input 
-              type="text" 
-              value={form.manufacturer} 
-              onChange={e => setForm({ ...form, manufacturer: e.target.value })}
-              placeholder="Введите производителя"
+              type="number" 
+              value={form.packageQuantity || ''} 
+              onChange={e => { setForm({ ...form, packageQuantity: parseInt(e.target.value) || 0 }); setError(null); }}
+              placeholder="1"
+              min="1"
+              step="1"
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" 
             />
           </div>
           <div>
-            <label className="text-sm text-slate-600 mb-1 block">Цена (₽) *</label>
+            <label className="text-sm text-slate-600 mb-1 block">Цена за упаковку (₽) *</label>
             <input 
               type="number" 
-              value={form.currentPrice || ''} 
-              onChange={e => { setForm({ ...form, currentPrice: parseFloat(e.target.value) || 0 }); setError(null); }}
+              value={form.pricePerPackage || ''} 
+              onChange={e => { setForm({ ...form, pricePerPackage: parseFloat(e.target.value) || 0 }); setError(null); }}
               placeholder="0"
               min="0"
               step="0.01"
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" 
             />
           </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Цена за единицу (₽)</label>
+            <div className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 font-semibold">
+              {pricePerUnit.toFixed(2)} ₽
+            </div>
+            <p className="text-xs text-slate-400 mt-1">Рассчитывается автоматически: цена за упаковку ÷ количество</p>
+          </div>
         </div>
         <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
           <button 
             onClick={handleSubmit} 
-            disabled={!form.name || form.currentPrice <= 0}
+            disabled={!form.name || form.pricePerPackage <= 0 || form.packageQuantity <= 0}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium"
           >
             💾 Сохранить
