@@ -833,8 +833,6 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
           employees={employees}
           onClose={() => setEditingEmployee(null)} 
           onSave={(id, updates) => {
-            console.log('onSave вызван с id:', id, 'updates:', updates);
-            
             // Закрываем окно сразу
             setEditingEmployee(null);
             
@@ -1014,20 +1012,19 @@ function EditEmployeeModal({
   onSave: (id: string, updates: Partial<gs.Employee>) => void 
 }) {
   const [form, setForm] = useState({
-    fullName: employee.fullName,
-    personalNumber: employee.personalNumber,
-    position: employee.position,
-    phone: employee.phone,
-    note: employee.note,
+    fullName: String(employee.fullName ?? ''),
+    personalNumber: String(employee.personalNumber ?? ''),
+    position: String(employee.position ?? ''),
+    phone: String(employee.phone ?? ''),
+    note: String(employee.note ?? ''),
   });
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = () => {
-    console.log('handleSubmit вызван');
     setError(null);
     
     // Проверка уникальности персонального номера (исключая текущего сотрудника)
-    const trimmedNumber = form.personalNumber.trim();
+    const trimmedNumber = String(form.personalNumber ?? '').trim();
     
     if (!trimmedNumber) {
       setError('Персональный номер не может быть пустым');
@@ -1044,20 +1041,12 @@ function EditEmployeeModal({
       return;
     }
     
-    console.log('Вызываем onSave с данными:', { id: employee.id, updates: {
-      fullName: form.fullName,
-      personalNumber: trimmedNumber,
-      position: form.position,
-      phone: form.phone,
-      note: form.note,
-    }});
-    
     onSave(employee.id, {
-      fullName: form.fullName,
+      fullName: String(form.fullName ?? ''),
       personalNumber: trimmedNumber,
-      position: form.position,
-      phone: form.phone,
-      note: form.note,
+      position: String(form.position ?? ''),
+      phone: String(form.phone ?? ''),
+      note: String(form.note ?? ''),
     });
   };
 
