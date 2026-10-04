@@ -1,5 +1,5 @@
 export type EmployeeStatus = 'Активен' | 'Неактивен' | 'Отпуск' | 'Уволен';
-export type NomenclatureCategory = 'Лекарство' | 'Оборудование' | 'Расходный материал';
+export type NomenclatureCategory = 'ЛС ПКУ' | 'ЛС' | 'Оборудование' | 'Расходный материал';
 export type Unit = 'Ампулы' | 'Таблетки' | 'Флаконы' | 'Штуки' | 'Упаковки';
 export type ReturnStatus = 'Новый' | 'Принят' | 'Отклонён' | 'Скорректирован';
 export type ChatRole = 'Руководитель' | 'Кладовщик' | 'Сотрудник';

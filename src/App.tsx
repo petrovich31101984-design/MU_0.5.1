@@ -1178,18 +1178,22 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
         <p className="text-slate-500 text-sm mt-1">Всего позиций: {nomenclature.length}</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-          <div className="text-2xl font-bold text-emerald-600">{nomenclature.filter(n => n.category === 'Лекарство').length}</div>
-          <div className="text-xs text-slate-500">Лекарств</div>
+          <div className="text-2xl font-bold text-emerald-600">{nomenclature.filter(n => n.category === 'ЛС ПКУ').length}</div>
+          <div className="text-xs text-slate-500">ЛС ПКУ</div>
         </div>
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-          <div className="text-2xl font-bold text-blue-600">{nomenclature.filter(n => n.category === 'Оборудование').length}</div>
-          <div className="text-xs text-slate-500">Оборудования</div>
+          <div className="text-2xl font-bold text-blue-600">{nomenclature.filter(n => n.category === 'ЛС').length}</div>
+          <div className="text-xs text-slate-500">ЛС</div>
         </div>
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <div className="text-2xl font-bold text-purple-600">{nomenclature.filter(n => n.category === 'Расходный материал').length}</div>
           <div className="text-xs text-slate-500">Расходных материалов</div>
+        </div>
+        <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+          <div className="text-2xl font-bold text-orange-600">{nomenclature.filter(n => n.category === 'Оборудование').length}</div>
+          <div className="text-xs text-slate-500">Оборудования</div>
         </div>
       </div>
 
@@ -1199,9 +1203,10 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
         <select value={catFilter} onChange={e => setCatFilter(e.target.value)}
           className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm">
           <option value="all">Все категории</option>
-          <option value="Лекарство">Лекарства</option>
-          <option value="Оборудование">Оборудование</option>
+          <option value="ЛС ПКУ">ЛС ПКУ</option>
+          <option value="ЛС">ЛС</option>
           <option value="Расходный материал">Расходные материалы</option>
+          <option value="Оборудование">Оборудование</option>
         </select>
       </div>
 

@@ -453,7 +453,7 @@ function createSheet_Nomenclature(ss) {
   
   sheet.setColumnWidth(2, 300);
   
-  const categoryRule = SpreadsheetApp.newDataValidation().requireValueInList(['Лекарство', 'Оборудование', 'Расходный материал']).build();
+  const categoryRule = SpreadsheetApp.newDataValidation().requireValueInList(['ЛС ПКУ', 'ЛС', 'Оборудование', 'Расходный материал']).build();
   sheet.getRange('C2:C1000').setDataValidation(categoryRule);
   
   const unitRule = SpreadsheetApp.newDataValidation().requireValueInList(['Ампулы', 'Таблетки', 'Флаконы', 'Штуки', 'Упаковки']).build();
