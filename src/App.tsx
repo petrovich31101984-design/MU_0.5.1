@@ -833,6 +833,8 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
           employees={employees}
           onClose={() => setEditingEmployee(null)} 
           onSave={(id, updates) => {
+            console.log('onSave вызван с id:', id, 'updates:', updates);
+            
             // Закрываем окно сразу
             setEditingEmployee(null);
             
@@ -1021,6 +1023,7 @@ function EditEmployeeModal({
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = () => {
+    console.log('handleSubmit вызван');
     setError(null);
     
     // Проверка уникальности персонального номера (исключая текущего сотрудника)
@@ -1040,6 +1043,14 @@ function EditEmployeeModal({
       setError(`Персональный номер "${trimmedNumber}" уже используется сотрудником "${existingEmployee.fullName}"`);
       return;
     }
+    
+    console.log('Вызываем onSave с данными:', { id: employee.id, updates: {
+      fullName: form.fullName,
+      personalNumber: trimmedNumber,
+      position: form.position,
+      phone: form.phone,
+      note: form.note,
+    }});
     
     onSave(employee.id, {
       fullName: form.fullName,
