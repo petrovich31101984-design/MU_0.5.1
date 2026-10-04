@@ -2134,7 +2134,13 @@ function ArrivalCardModal({
               <div className="p-4 bg-slate-50 border-b border-slate-200">
                 <h4 className="text-sm font-semibold text-slate-700">Выбранные позиции</h4>
               </div>
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col style={{ width: '50%' }} />
+                  <col style={{ width: '120px' }} />
+                  <col style={{ width: '150px' }} />
+                  <col style={{ width: '150px' }} />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
                     <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase">Наименование</th>
@@ -2148,14 +2154,14 @@ function ArrivalCardModal({
                     const nom = nomenclature.find(n => n.id === item.nomenclatureId);
                     return (
                       <tr key={item.nomenclatureId} className="border-b border-slate-100">
-                        <td className="px-4 py-3 text-sm text-slate-800">{nom?.name}</td>
+                        <td className="px-4 py-3 text-sm text-slate-800 truncate">{nom?.name}</td>
                         <td className="px-4 py-3 text-center">
                           <input
                             type="number"
                             value={item.quantity}
                             onChange={e => updateQuantity(item.nomenclatureId, parseInt(e.target.value) || 0)}
                             min="0"
-                            className="w-20 px-2 py-1 text-center border border-slate-300 rounded text-slate-800 focus:outline-none focus:border-blue-500"
+                            className="w-full px-2 py-1 text-center border border-slate-300 rounded text-slate-800 focus:outline-none focus:border-blue-500"
                           />
                         </td>
                         <td className="px-4 py-3 text-right text-sm text-slate-700">{item.price.toLocaleString('ru-RU')} ₽</td>
