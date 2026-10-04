@@ -1394,7 +1394,6 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
               <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
                 <td className="px-5 py-3">
                   <div className="text-sm font-medium text-slate-800">{item.name}</div>
-                  <div className="text-xs text-slate-400 font-mono">{item.id}</div>
                 </td>
                 <td className="px-5 py-3">
                   <span className={`px-2 py-1 rounded-full text-xs ${
