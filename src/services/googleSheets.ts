@@ -267,7 +267,6 @@ export async function getNomenclature(): Promise<Nomenclature[]> {
 
 export async function getArrivals(): Promise<Arrival[]> {
   const data = await fetchData('getArrivals');
-  console.log('Загруженные данные прихода из Google Sheets:', data);
   return data.map((row: any) => ({
     id: row['ID'] || '',
     employeeId: row['Сотрудник_ID'] || '',

@@ -1685,8 +1685,6 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
       month: currentMonth,
       addedBy: 'Руководитель',
     };
-    console.log('Создаём новый приход:', newArrival);
-    console.log('Текущий месяц (currentMonth):', currentMonth);
     setArrivals([...arrivals, newArrival]);
     gs.addArrival(newArrival).catch(err => {
       console.error('Ошибка добавления прихода:', err);
@@ -1719,10 +1717,6 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
       alert('Ошибка при удалении прихода. Попробуйте ещё раз.');
     });
   };
-
-  console.log('Все приходы:', arrivals);
-  console.log('Текущий месяц для фильтрации:', currentMonth);
-  console.log('Приходы за текущий месяц:', arrivals.filter(a => a.month === currentMonth));
 
   return (
     <div className="space-y-6">
