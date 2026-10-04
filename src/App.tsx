@@ -1670,7 +1670,7 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
 
 // ============ ПРИХОД К СОТРУДНИКУ ============
 function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, arrivals, setArrivals } = data;
+  const { employees, nomenclature, arrivals, setArrivals } = data;
   const [showAddArrival, setShowAddArrival] = useState(false);
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1680,7 +1680,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
     const newArrival = {
       id: `ARR-${Date.now()}`,
       ...form,
-      date: new Date().toISOString().split('T')[0],
+      date: form.date,
       month: currentMonth,
       addedBy: 'Руководитель',
     };
@@ -1704,7 +1704,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
             {arrivals.filter(a => a.month === currentMonth).reduce((s, a) => s + a.amount, 0).toLocaleString('ru-RU')} ₽
           </span>
         </div>
-        <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Внести приход</button>
+        <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Создать карту прихода</button>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -1740,8 +1740,12 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
         )}
       </div>
 
-      {showAddArrival && <AddArrivalModal employees={employees.filter(e => e.status === 'Активен')} currentMonth={currentMonth}
-        onClose={() => setShowAddArrival(false)} onAdd={handleAddArrival} />}
+      {showAddArrival && <ArrivalCardModal 
+        employees={employees.filter(e => e.status === 'Активен')} 
+        nomenclature={nomenclature}
+        onClose={() => setShowAddArrival(false)} 
+        onAdd={handleAddArrival} 
+      />}
     </div>
   );
 }
@@ -1880,42 +1884,242 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
   );
 }
 
-function AddArrivalModal({ employees, onClose, onAdd }: { employees: gs.Employee[]; currentMonth: string; onClose: () => void; onAdd: (form: any) => void }) {
-  const [form, setForm] = useState({ employeeId: employees[0]?.id || '', amount: 0, shifts: 0, type: 'Плановый' as 'Плановый' | 'Дополнительный', comment: '' });
+function ArrivalCardModal({ 
+  employees, 
+  nomenclature,
+  onClose, 
+  onAdd 
+}: { 
+  employees: gs.Employee[]; 
+  nomenclature: gs.Nomenclature[];
+  onClose: () => void; 
+  onAdd: (form: any) => void 
+}) {
+  const [form, setForm] = useState({
+    employeeId: employees[0]?.id || '',
+    date: new Date().toISOString().split('T')[0],
+    items: [] as Array<{ nomenclatureId: string; quantity: number; price: number; total: number }>
+  });
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const filteredNomenclature = nomenclature.filter(n => 
+    selectedCategory === 'all' || n.category === selectedCategory
+  );
+
+  const addItem = (item: gs.Nomenclature) => {
+    const existingItem = form.items.find(i => i.nomenclatureId === item.id);
+    if (existingItem) {
+      setForm({
+        ...form,
+        items: form.items.map(i => 
+          i.nomenclatureId === item.id 
+            ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.price }
+            : i
+        )
+      });
+    } else {
+      setForm({
+        ...form,
+        items: [...form.items, {
+          nomenclatureId: item.id,
+          quantity: 1,
+          price: item.currentPrice,
+          total: item.currentPrice
+        }]
+      });
+    }
+  };
+
+  const updateQuantity = (nomenclatureId: string, quantity: number) => {
+    if (quantity <= 0) {
+      setForm({
+        ...form,
+        items: form.items.filter(i => i.nomenclatureId !== nomenclatureId)
+      });
+    } else {
+      setForm({
+        ...form,
+        items: form.items.map(i => 
+          i.nomenclatureId === nomenclatureId 
+            ? { ...i, quantity, total: quantity * i.price }
+            : i
+        )
+      });
+    }
+  };
+
+  const totalAmount = form.items.reduce((sum, item) => sum + item.total, 0);
+
+  const handleSubmit = () => {
+    if (form.items.length === 0) {
+      alert('Добавьте хотя бы одну позицию');
+      return;
+    }
+    onAdd({
+      employeeId: form.employeeId,
+      date: form.date,
+      items: form.items,
+      amount: totalAmount,
+      shifts: 0,
+      type: 'Плановый',
+      comment: ''
+    });
+  };
+
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
         <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800">Внести приход</h3>
+          <h3 className="text-lg font-bold text-slate-800">📥 Карта прихода</h3>
         </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="text-sm text-slate-600 mb-1 block">Сотрудник</label>
-            <select value={form.employeeId} onChange={e => setForm({ ...form, employeeId: e.target.value })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500">
-              {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.fullName}</option>)}
-            </select>
+        
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Основная информация */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Дата</label>
+              <input 
+                type="date" 
+                value={form.date} 
+                onChange={e => setForm({ ...form, date: e.target.value })}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" 
+              />
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Сотрудник</label>
+              <select 
+                value={form.employeeId} 
+                onChange={e => setForm({ ...form, employeeId: e.target.value })}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
+              >
+                {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.fullName}</option>)}
+              </select>
+            </div>
           </div>
+
+          {/* Выбор категории */}
           <div>
-            <label className="text-sm text-slate-600 mb-1 block">Сумма (₽)</label>
-            <input type="number" value={form.amount || ''} onChange={e => setForm({ ...form, amount: parseFloat(e.target.value) || 0 })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" />
+            <label className="text-sm text-slate-600 mb-2 block">Выберите категорию</label>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setSelectedCategory('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                  selectedCategory === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Все
+              </button>
+              <button 
+                onClick={() => setSelectedCategory('ЛС ПКУ')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                  selectedCategory === 'ЛС ПКУ' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                💉 ЛС ПКУ
+              </button>
+              <button 
+                onClick={() => setSelectedCategory('ЛС')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                  selectedCategory === 'ЛС' ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                💊 ЛС
+              </button>
+              <button 
+                onClick={() => setSelectedCategory('Расходный материал')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                  selectedCategory === 'Расходный материал' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                🩹 Расходники
+              </button>
+              <button 
+                onClick={() => setSelectedCategory('Оборудование')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                  selectedCategory === 'Оборудование' ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                🧰 Оборудование
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="text-sm text-slate-600 mb-1 block">Смены</label>
-            <input type="number" value={form.shifts || ''} onChange={e => setForm({ ...form, shifts: parseInt(e.target.value) || 0 })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" />
+
+          {/* Список номенклатуры для добавления */}
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <h4 className="text-sm font-semibold text-slate-700 mb-3">Доступные позиции</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+              {filteredNomenclature.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => addItem(item)}
+                  className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
+                >
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-slate-800">{item.name}</div>
+                    <div className="text-xs text-slate-500">{item.currentPrice.toLocaleString('ru-RU')} ₽ / {item.unit}</div>
+                  </div>
+                  <span className="text-blue-600 text-lg">+</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div>
-            <label className="text-sm text-slate-600 mb-1 block">Комментарий</label>
-            <input type="text" value={form.comment} onChange={e => setForm({ ...form, comment: e.target.value })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" />
-          </div>
+
+          {/* Выбранные позиции */}
+          {form.items.length > 0 && (
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+              <div className="p-4 bg-slate-50 border-b border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-700">Выбранные позиции</h4>
+              </div>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase">Наименование</th>
+                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-600 uppercase">Кол-во</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Цена за ед.</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Сумма</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {form.items.map(item => {
+                    const nom = nomenclature.find(n => n.id === item.nomenclatureId);
+                    return (
+                      <tr key={item.nomenclatureId} className="border-b border-slate-100">
+                        <td className="px-4 py-3 text-sm text-slate-800">{nom?.name}</td>
+                        <td className="px-4 py-3 text-center">
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={e => updateQuantity(item.nomenclatureId, parseInt(e.target.value) || 0)}
+                            min="0"
+                            className="w-20 px-2 py-1 text-center border border-slate-300 rounded text-slate-800 focus:outline-none focus:border-blue-500"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-slate-700">{item.price.toLocaleString('ru-RU')} ₽</td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600">{item.total.toLocaleString('ru-RU')} ₽</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-slate-50 font-bold">
+                    <td colSpan={3} className="px-4 py-3 text-right text-sm text-slate-800">ИТОГО:</td>
+                    <td className="px-4 py-3 text-right text-lg text-emerald-600">{totalAmount.toLocaleString('ru-RU')} ₽</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
         </div>
+
         <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
-          <button onClick={() => onAdd(form)} disabled={form.amount <= 0}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium">Внести</button>
+          <button 
+            onClick={handleSubmit} 
+            disabled={form.items.length === 0}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium"
+          >
+            💾 Сохранить карту прихода
+          </button>
         </div>
       </div>
     </div>
