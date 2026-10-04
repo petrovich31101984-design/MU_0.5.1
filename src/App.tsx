@@ -1169,6 +1169,7 @@ function AddNomenclatureModal({
     name: '',
     category: 'ЛС ПКУ',
     unit: 'Штуки',
+    manufacturer: '',
     packageQuantity: 1,
     pricePerPackage: 0,
   });
@@ -1200,7 +1201,7 @@ function AddNomenclatureModal({
       name: form.name.trim(),
       category: form.category,
       unit: form.unit,
-      manufacturer: '',
+      manufacturer: form.manufacturer.trim(),
       active: true,
       currentPrice: pricePerUnit,
       packageQuantity: form.packageQuantity,
@@ -1260,6 +1261,16 @@ function AddNomenclatureModal({
               <option value="Штуки">Штуки</option>
               <option value="Упаковки">Упаковки</option>
             </select>
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Производитель</label>
+            <input 
+              type="text" 
+              value={form.manufacturer} 
+              onChange={e => setForm({ ...form, manufacturer: e.target.value })}
+              placeholder="Введите производителя"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" 
+            />
           </div>
           <div>
             <label className="text-sm text-slate-600 mb-1 block">Количество в упаковке *</label>
@@ -1372,6 +1383,8 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Название</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Категория</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Ед. изм.</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Производитель</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Кол-во в упаковке</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Цена за упаковку (₽)</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Цена за единицу (₽)</th>
             </tr>
@@ -1393,6 +1406,8 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
                   }`}>{item.category}</span>
                 </td>
                 <td className="px-5 py-3 text-sm text-slate-700">{item.unit}</td>
+                <td className="px-5 py-3 text-sm text-slate-700">{item.manufacturer || '-'}</td>
+                <td className="px-5 py-3 text-center text-sm font-semibold text-slate-800">{item.packageQuantity || 1}</td>
                 <td className="px-5 py-3 text-right text-sm font-semibold text-emerald-600">
                   {(item.currentPrice * (item.packageQuantity || 1)).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
                 </td>
