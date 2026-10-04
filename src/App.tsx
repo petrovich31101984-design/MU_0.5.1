@@ -1181,19 +1181,19 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
       <div className="grid grid-cols-4 gap-3">
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <div className="text-2xl font-bold text-red-600">{nomenclature.filter(n => n.category === 'ЛС ПКУ').length}</div>
-          <div className="text-xs text-slate-500">ЛС ПКУ</div>
+          <div className="text-xs text-slate-500">💉 ЛС ПКУ</div>
         </div>
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <div className="text-2xl font-bold text-green-600">{nomenclature.filter(n => n.category === 'ЛС').length}</div>
-          <div className="text-xs text-slate-500">ЛС</div>
+          <div className="text-xs text-slate-500">💊 ЛС</div>
         </div>
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <div className="text-2xl font-bold text-blue-600">{nomenclature.filter(n => n.category === 'Расходный материал').length}</div>
-          <div className="text-xs text-slate-500 uppercase">Расходных материалов</div>
+          <div className="text-xs text-slate-500 uppercase">🩹 Расходных материалов</div>
         </div>
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <div className="text-2xl font-bold text-purple-600">{nomenclature.filter(n => n.category === 'Оборудование').length}</div>
-          <div className="text-xs text-slate-500 uppercase">Оборудования</div>
+          <div className="text-xs text-slate-500 uppercase">🩺 Оборудования</div>
         </div>
       </div>
 
