@@ -379,3 +379,7 @@ export async function addAuditLog(log: Partial<AuditEntry>): Promise<void> {
 export async function updateNomenclature(id: string, data: any): Promise<void> {
   await postData('updateNomenclature', { id, ...data });
 }
+
+export async function addNomenclature(item: Partial<Nomenclature>): Promise<void> {
+  await postData('addNomenclature', item);
+}

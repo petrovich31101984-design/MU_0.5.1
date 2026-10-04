@@ -89,6 +89,9 @@ function doPost(e) {
       case 'updateNomenclature':
         updateNomenclatureRow(data.data);
         return jsonResponse({ success: true });
+      case 'addNomenclature':
+        addNomenclatureRow(data.data);
+        return jsonResponse({ success: true });
       case 'setupDatabase':
         setupDatabase();
         return jsonResponse({ success: true, message: 'База данных создана' });
@@ -317,6 +320,37 @@ function addAuditLogRow(data) {
     data.ip || '',
     data.device || ''
   ]);
+}
+
+function addNomenclatureRow(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Номенклатура');
+  sheet.appendRow([
+    data.id || '',
+    data.name || '',
+    data.category || 'ЛС ПКУ',
+    data.unit || 'Штуки',
+    data.manufacturer || '',
+    '', // Штрих-код
+    data.active !== false ? 'ДА' : 'НЕТ',
+    new Date(),
+    '' // Примечание
+  ]);
+  
+  // Добавляем цену в лист Цены
+  const pricesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Цены');
+  pricesSheet.appendRow([
+    'PRC-' + Utilities.getUuid().substring(0, 8).toUpperCase(),
+    data.id,
+    data.name || '',
+    data.currentPrice || 0,
+    new Date(),
+    '', // Дата окончания
+    'Руководитель',
+    new Date(),
+    '' // Примечание
+  ]);
+  
+  writeAudit('Номенклатура', data.id, 'Создание', '', 'Номенклатура: ' + data.name);
 }
 
 function updateNomenclatureRow(data) {
