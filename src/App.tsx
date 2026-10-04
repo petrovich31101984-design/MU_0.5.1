@@ -235,9 +235,9 @@ export default function App() {
     { id: 'dashboard', label: 'Панель руководителя', icon: '👨‍⚕️' },
     { id: 'employees', label: 'Сотрудники', icon: '👥' },
     { id: 'nomenclature', label: 'Номенклатура', icon: '💊' },
-    { id: 'arrival', label: 'Приход к сотруднику', icon: '💰' },
+    { id: 'arrival', label: 'Приход к сотруднику', icon: '📥' },
     { id: 'expense', label: 'Расход у сотрудника', icon: '📤' },
-    { id: 'balance', label: 'Остаток у сотрудника', icon: '📊' },
+    { id: 'balance', label: 'Остаток у сотрудника', icon: '🧰' },
     { id: 'chat', label: 'Сообщения', icon: '💬' },
     { id: 'reports', label: 'Отчёты', icon: '📈' },
     { id: 'audit', label: 'Журнал', icon: '📝' },
@@ -1694,7 +1694,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">💰 Приход к сотруднику</h2>
+        <h2 className="text-2xl font-bold text-slate-800">📥 Приход к сотруднику</h2>
         <p className="text-slate-500 text-sm mt-1">Управление поступлениями</p>
       </div>
 
@@ -1823,7 +1823,7 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">📊 Остаток у сотрудника</h2>
+        <h2 className="text-2xl font-bold text-slate-800">🧰 Остаток у сотрудника</h2>
         <p className="text-slate-500 text-sm mt-1">Период: {currentMonth}</p>
       </div>
 
