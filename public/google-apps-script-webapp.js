@@ -154,14 +154,20 @@ function getNomenclatureData() { return readSheetData('Номенклатура'
 function getPricesData() { return readSheetData('Цены'); }
 function getArrivalsData() { 
   const data = readSheetData('Приход');
+  Logger.log('📊 Загружено записей прихода: ' + data.length);
+  if (data.length > 0) {
+    Logger.log('📋 Первая запись: ' + JSON.stringify(data[0]));
+  }
   return data.map(row => {
     const result = Object.assign({}, row);
     try {
       const itemsJson = row['Позиции (JSON)'] || '[]';
       result.items = JSON.parse(itemsJson);
     } catch (e) {
+      Logger.log('❌ Ошибка парсинга JSON: ' + e.message);
       result.items = [];
     }
+    Logger.log('📦 Обработана запись: ID=' + result['ID'] + ', Месяц=' + result['Месяц'] + ', Сумма=' + result['Сумма (₽)']);
     return result;
   });
 }
@@ -246,8 +252,9 @@ function deleteEmployeeRow(id) {
 }
 
 function addArrivalRow(data) {
+  Logger.log('💾 Добавление прихода: ' + JSON.stringify(data));
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Приход');
-  sheet.appendRow([
+  const rowData = [
     data.id || '',
     data.employeeId || '',
     data.employeeName || '',
@@ -260,8 +267,11 @@ function addArrivalRow(data) {
     data.comment || '',
     JSON.stringify(data.items || []),
     new Date()
-  ]);
+  ];
+  Logger.log('📝 Данные для записи: ' + JSON.stringify(rowData));
+  sheet.appendRow(rowData);
   writeAudit('Приход', data.id, 'Создание', '', 'Приход: ' + data.amount + '₽');
+  Logger.log('✅ Приход успешно добавлен');
 }
 
 function updateArrivalRow(id, data) {
