@@ -92,6 +92,9 @@ function doPost(e) {
       case 'addNomenclature':
         addNomenclatureRow(data.data);
         return jsonResponse({ success: true });
+      case 'deleteNomenclature':
+        deleteNomenclatureRow(data.data.id);
+        return jsonResponse({ success: true });
       case 'setupDatabase':
         setupDatabase();
         return jsonResponse({ success: true, message: 'База данных создана' });
@@ -352,6 +355,20 @@ function addNomenclatureRow(data) {
   ]);
   
   writeAudit('Номенклатура', data.id, 'Создание', '', 'Номенклатура: ' + data.name);
+}
+
+function deleteNomenclatureRow(id) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Номенклатура');
+  const allData = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      const nomenclatureName = allData[i][1];
+      sheet.deleteRow(i + 1);
+      writeAudit('Номенклатура', id, 'Удаление', 'Номенклатура: ' + nomenclatureName, '');
+      break;
+    }
+  }
 }
 
 function updateNomenclatureRow(data) {

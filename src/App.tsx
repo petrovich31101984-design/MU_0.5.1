@@ -1157,6 +1157,169 @@ function EditEmployeeModal({
   );
 }
 
+// ============ МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ НОМЕНКЛАТУРЫ ============
+function EditNomenclatureModal({ 
+  item,
+  onClose, 
+  onSave 
+}: { 
+  item: gs.Nomenclature;
+  onClose: () => void; 
+  onSave: (item: gs.Nomenclature) => Promise<void> 
+}) {
+  const [form, setForm] = useState({
+    name: item.name,
+    category: item.category,
+    unit: item.unit,
+    manufacturer: item.manufacturer,
+    packageQuantity: item.packageQuantity,
+    pricePerPackage: item.currentPrice * (item.packageQuantity || 1),
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  // Автоматический расчет цены за единицу
+  const pricePerUnit = form.packageQuantity > 0 ? form.pricePerPackage / form.packageQuantity : 0;
+
+  const handleSubmit = async () => {
+    setError(null);
+    
+    if (!form.name.trim()) {
+      setError('Наименование не может быть пустым');
+      return;
+    }
+    
+    if (form.pricePerPackage <= 0) {
+      setError('Цена за упаковку должна быть больше 0');
+      return;
+    }
+    
+    if (form.packageQuantity <= 0) {
+      setError('Количество в упаковке должно быть больше 0');
+      return;
+    }
+    
+    await onSave({
+      ...item,
+      name: form.name.trim(),
+      category: form.category,
+      unit: form.unit,
+      manufacturer: form.manufacturer.trim(),
+      currentPrice: pricePerUnit,
+      packageQuantity: form.packageQuantity,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-800">✍️ Редактировать номенклатуру</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+        </div>
+        <div className="p-6 space-y-4">
+          {error && (
+            <div className="p-4 bg-red-50 border-2 border-red-300 rounded-lg text-sm text-red-700 flex items-start gap-3">
+              <span className="text-xl flex-shrink-0">⚠️</span>
+              <div className="flex-1">
+                <div className="font-semibold mb-1">Ошибка</div>
+                <div>{error}</div>
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Категория *</label>
+            <select 
+              value={form.category} 
+              onChange={e => setForm({ ...form, category: e.target.value })}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
+            >
+              <option value="ЛС ПКУ">💉 ЛС ПКУ</option>
+              <option value="ЛС">💊 ЛС</option>
+              <option value="Расходный материал">🩹 Расходных материалов</option>
+              <option value="Оборудование">🩺 Оборудования</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Наименование *</label>
+            <input 
+              type="text" 
+              value={form.name} 
+              onChange={e => { setForm({ ...form, name: e.target.value }); setError(null); }}
+              placeholder="Введите наименование"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" 
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Единица измерения</label>
+            <select 
+              value={form.unit} 
+              onChange={e => setForm({ ...form, unit: e.target.value })}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
+            >
+              <option value="Ампулы">Ампулы</option>
+              <option value="Таблетки">Таблетки</option>
+              <option value="Флаконы">Флаконы</option>
+              <option value="Штуки">Штуки</option>
+              <option value="Упаковки">Упаковки</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Производитель</label>
+            <input 
+              type="text" 
+              value={form.manufacturer} 
+              onChange={e => setForm({ ...form, manufacturer: e.target.value })}
+              placeholder="Введите производителя"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" 
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Количество в упаковке *</label>
+            <input 
+              type="number" 
+              value={form.packageQuantity || ''} 
+              onChange={e => { setForm({ ...form, packageQuantity: parseInt(e.target.value) || 0 }); setError(null); }}
+              placeholder="1"
+              min="1"
+              step="1"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" 
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Цена за упаковку (₽) *</label>
+            <input 
+              type="number" 
+              value={form.pricePerPackage || ''} 
+              onChange={e => { setForm({ ...form, pricePerPackage: parseFloat(e.target.value) || 0 }); setError(null); }}
+              placeholder="0"
+              min="0"
+              step="0.01"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" 
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Цена за единицу (₽)</label>
+            <div className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 font-semibold">
+              {pricePerUnit.toFixed(2)} ₽
+            </div>
+            <p className="text-xs text-slate-400 mt-1">Рассчитывается автоматически: цена за упаковку ÷ количество</p>
+          </div>
+        </div>
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
+          <button 
+            onClick={handleSubmit} 
+            disabled={!form.name || form.pricePerPackage <= 0 || form.packageQuantity <= 0}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium"
+          >
+            💾 Сохранить
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============ МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ НОМЕНКЛАТУРЫ ============
 function AddNomenclatureModal({ 
   onClose, 
@@ -1325,6 +1488,24 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<gs.Nomenclature | null>(null);
+
+  const handleEdit = (item: gs.Nomenclature) => {
+    setEditingItem(item);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Удалить эту позицию из номенклатуры?')) {
+      // Удаляем из локального состояния
+      setNomenclature(nomenclature.filter(n => n.id !== id));
+      
+      // Отправляем в Google Sheets в фоне
+      gs.deleteNomenclature(id).catch((err: Error) => {
+        console.error('Ошибка удаления номенклатуры:', err);
+        alert('Ошибка при удалении. Попробуйте ещё раз.');
+      });
+    }
+  };
 
   const searchLower = String(search || '').toLowerCase().trim();
   const filtered = nomenclature.filter(n => {
@@ -1387,6 +1568,7 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Кол-во в упаковке</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Цена за упаковку (₽)</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Цена за единицу (₽)</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -1413,6 +1595,24 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
                 <td className="px-5 py-3 text-right text-sm font-semibold text-blue-600">
                   {item.currentPrice.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
                 </td>
+                <td className="px-5 py-3">
+                  <div className="flex items-center justify-center gap-2">
+                    <button 
+                      onClick={() => handleEdit(item)}
+                      className="text-blue-600 hover:text-blue-800 text-lg"
+                      title="✍️ Редактировать"
+                    >
+                      ✍️
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(item.id)}
+                      className="text-red-600 hover:text-red-800 text-lg"
+                      title="❌ Удалить"
+                    >
+                      ❌
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -1438,6 +1638,26 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
             gs.addNomenclature(item).catch(err => {
               console.error('Ошибка добавления номенклатуры:', err);
               alert('Ошибка при добавлении номенклатуры. Попробуйте ещё раз.');
+            });
+          }}
+        />
+      )}
+
+      {editingItem && (
+        <EditNomenclatureModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={async (updatedItem: gs.Nomenclature) => {
+            // Закрываем окно сразу
+            setEditingItem(null);
+            
+            // Обновляем локальное состояние
+            setNomenclature(nomenclature.map(n => n.id === updatedItem.id ? updatedItem : n));
+            
+            // Отправляем в Google Sheets в фоне
+            gs.updateNomenclature(updatedItem.id, updatedItem).catch((err: Error) => {
+              console.error('Ошибка обновления номенклатуры:', err);
+              alert('Ошибка при сохранении изменений. Попробуйте ещё раз.');
             });
           }}
         />

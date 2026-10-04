@@ -385,3 +385,7 @@ export async function updateNomenclature(id: string, data: any): Promise<void> {
 export async function addNomenclature(item: Partial<Nomenclature>): Promise<void> {
   await postData('addNomenclature', item);
 }
+
+export async function deleteNomenclature(id: string): Promise<void> {
+  await postData('deleteNomenclature', { id });
+}
