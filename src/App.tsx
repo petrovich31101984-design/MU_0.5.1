@@ -1321,7 +1321,7 @@ function AddNomenclatureModal({
 
 // ============ НОМЕНКЛАТУРА ============
 function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
-  const { nomenclature } = data;
+  const { nomenclature, setNomenclature } = data;
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -1428,13 +1428,17 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
         <AddNomenclatureModal
           onClose={() => setShowAddModal(false)}
           onAdd={async (item: gs.Nomenclature) => {
-            try {
-              await gs.addNomenclature(item);
-              setShowAddModal(false);
-              data.refresh();
-            } catch (error) {
-              alert('Ошибка при добавлении номенклатуры: ' + (error instanceof Error ? error.message : 'Неизвестная ошибка'));
-            }
+            // Закрываем окно сразу
+            setShowAddModal(false);
+            
+            // Добавляем в локальное состояние
+            setNomenclature([...nomenclature, item]);
+            
+            // Отправляем в Google Sheets в фоне
+            gs.addNomenclature(item).catch(err => {
+              console.error('Ошибка добавления номенклатуры:', err);
+              alert('Ошибка при добавлении номенклатуры. Попробуйте ещё раз.');
+            });
           }}
         />
       )}
