@@ -1750,7 +1750,15 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
               const emp = employees.find(e => e.id === arr.employeeId);
               return (
                 <tr key={arr.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-5 py-3 text-sm text-slate-700">{arr.date}</td>
+                  <td className="px-5 py-3 text-sm text-slate-700">
+                    {new Date(arr.date).toLocaleString('ru-RU', { 
+                      day: '2-digit', 
+                      month: '2-digit', 
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </td>
                   <td className="px-5 py-3 text-sm text-slate-800">{emp?.fullName || arr.employeeId}</td>
                   <td className="px-5 py-3">
                     <span className={`px-2 py-1 rounded-full text-xs ${arr.type === 'Плановый' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{arr.type}</span>
