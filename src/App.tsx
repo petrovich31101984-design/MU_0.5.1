@@ -732,6 +732,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Персональный номер</th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник (ФИО)</th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Статус</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Последний вход</th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Действия</th>
               </tr>
             </thead>
@@ -760,6 +761,20 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                         }`}>{emp.status}</span>
                       )}
                     </div>
+                  </td>
+                  <td className="px-5 py-3 text-sm text-slate-600">
+                    {emp.lastActivity ? (
+                      <div className="flex flex-col">
+                        <span className="text-slate-800">
+                          {new Date(emp.lastActivity).toLocaleDateString('ru-RU')}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {new Date(emp.lastActivity).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 italic">Никогда</span>
+                    )}
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
@@ -808,6 +823,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
               {/* Добавляем пустые строки до 10, если сотрудников меньше */}
               {filtered.length < 10 && Array.from({ length: 10 - filtered.length }).map((_, i) => (
                 <tr key={`empty-${i}`} className="border-b border-slate-100">
+                  <td className="px-5 py-3 text-sm text-slate-300">-</td>
                   <td className="px-5 py-3 text-sm text-slate-300">-</td>
                   <td className="px-5 py-3 text-sm text-slate-300">-</td>
                   <td className="px-5 py-3 text-sm text-slate-300">-</td>
