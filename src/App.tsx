@@ -1672,6 +1672,7 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
 function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
   const { employees, nomenclature, arrivals, setArrivals } = data;
   const [showAddArrival, setShowAddArrival] = useState(false);
+  const [editingArrival, setEditingArrival] = useState<gs.Arrival | null>(null);
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
@@ -1688,6 +1689,32 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
     gs.addArrival(newArrival).catch(err => {
       console.error('Ошибка добавления прихода:', err);
       alert('Ошибка при добавлении прихода. Попробуйте ещё раз.');
+    });
+  };
+
+  const handleEditArrival = async (form: any) => {
+    if (!editingArrival) return;
+    setEditingArrival(null);
+    
+    const updatedArrival = {
+      ...editingArrival,
+      ...form,
+    };
+    
+    setArrivals(arrivals.map(a => a.id === editingArrival.id ? updatedArrival : a));
+    gs.updateArrival(editingArrival.id, updatedArrival).catch(err => {
+      console.error('Ошибка обновления прихода:', err);
+      alert('Ошибка при обновлении прихода. Попробуйте ещё раз.');
+    });
+  };
+
+  const handleDeleteArrival = async (id: string) => {
+    if (!confirm('Удалить эту карту прихода?')) return;
+    
+    setArrivals(arrivals.filter(a => a.id !== id));
+    gs.deleteArrival(id).catch(err => {
+      console.error('Ошибка удаления прихода:', err);
+      alert('Ошибка при удалении прихода. Попробуйте ещё раз.');
     });
   };
 
@@ -1715,7 +1742,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Тип</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Сумма (₽)</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Смены</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -1729,7 +1756,24 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
                     <span className={`px-2 py-1 rounded-full text-xs ${arr.type === 'Плановый' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{arr.type}</span>
                   </td>
                   <td className="px-5 py-3 text-right text-sm font-semibold text-emerald-600">{arr.amount.toLocaleString('ru-RU')} ₽</td>
-                  <td className="px-5 py-3 text-right text-sm text-slate-700">{arr.shifts}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <button 
+                        onClick={() => setEditingArrival(arr)}
+                        className="text-blue-600 hover:text-blue-800 text-lg"
+                        title="Редактировать"
+                      >
+                        ✍️
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteArrival(arr.id)}
+                        className="text-red-600 hover:text-red-800 text-lg"
+                        title="Удалить"
+                      >
+                        ❌
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -1745,6 +1789,14 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
         nomenclature={nomenclature}
         onClose={() => setShowAddArrival(false)} 
         onAdd={handleAddArrival} 
+      />}
+
+      {editingArrival && <ArrivalCardModal 
+        employees={employees.filter(e => e.status === 'Активен')} 
+        nomenclature={nomenclature}
+        initialData={editingArrival}
+        onClose={() => setEditingArrival(null)} 
+        onAdd={handleEditArrival} 
       />}
     </div>
   );
@@ -1887,18 +1939,22 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
 function ArrivalCardModal({ 
   employees, 
   nomenclature,
+  initialData,
   onClose, 
   onAdd 
 }: { 
   employees: gs.Employee[]; 
   nomenclature: gs.Nomenclature[];
+  initialData?: gs.Arrival;
   onClose: () => void; 
   onAdd: (form: any) => void 
 }) {
+  type ArrivalItem = { nomenclatureId: string; quantity: number; price: number; total: number };
+  
   const [form, setForm] = useState({
-    employeeId: employees[0]?.id || '',
-    date: new Date().toISOString().split('T')[0],
-    items: [] as Array<{ nomenclatureId: string; quantity: number; price: number; total: number }>
+    employeeId: initialData?.employeeId || employees[0]?.id || '',
+    date: initialData?.date || new Date().toISOString().split('T')[0],
+    items: ((initialData as any)?.items || []) as ArrivalItem[]
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -1907,11 +1963,11 @@ function ArrivalCardModal({
   );
 
   const addItem = (item: gs.Nomenclature) => {
-    const existingItem = form.items.find(i => i.nomenclatureId === item.id);
+    const existingItem = form.items.find((i: ArrivalItem) => i.nomenclatureId === item.id);
     if (existingItem) {
       setForm({
         ...form,
-        items: form.items.map(i => 
+        items: form.items.map((i: ArrivalItem) => 
           i.nomenclatureId === item.id 
             ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.price }
             : i
@@ -1934,12 +1990,12 @@ function ArrivalCardModal({
     if (quantity <= 0) {
       setForm({
         ...form,
-        items: form.items.filter(i => i.nomenclatureId !== nomenclatureId)
+        items: form.items.filter((i: ArrivalItem) => i.nomenclatureId !== nomenclatureId)
       });
     } else {
       setForm({
         ...form,
-        items: form.items.map(i => 
+        items: form.items.map((i: ArrivalItem) => 
           i.nomenclatureId === nomenclatureId 
             ? { ...i, quantity, total: quantity * i.price }
             : i
@@ -1948,7 +2004,7 @@ function ArrivalCardModal({
     }
   };
 
-  const totalAmount = form.items.reduce((sum, item) => sum + item.total, 0);
+  const totalAmount = form.items.reduce((sum: number, item: ArrivalItem) => sum + item.total, 0);
 
   const handleSubmit = () => {
     if (form.items.length === 0) {
@@ -2080,7 +2136,7 @@ function ArrivalCardModal({
                   </tr>
                 </thead>
                 <tbody>
-                  {form.items.map(item => {
+                  {form.items.map((item: ArrivalItem) => {
                     const nom = nomenclature.find(n => n.id === item.nomenclatureId);
                     return (
                       <tr key={item.nomenclatureId} className="border-b border-slate-100">

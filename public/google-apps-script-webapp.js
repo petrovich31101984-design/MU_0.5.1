@@ -74,6 +74,12 @@ function doPost(e) {
       case 'addArrival':
         addArrivalRow(data.data);
         return jsonResponse({ success: true });
+      case 'updateArrival':
+        updateArrivalRow(data.data.id, data.data.data);
+        return jsonResponse({ success: true });
+      case 'deleteArrival':
+        deleteArrivalRow(data.data.id);
+        return jsonResponse({ success: true });
       case 'addExpense':
         addExpenseRow(data.data);
         return jsonResponse({ success: true });
@@ -144,7 +150,18 @@ function getEmployeesData() {
 
 function getNomenclatureData() { return readSheetData('Номенклатура'); }
 function getPricesData() { return readSheetData('Цены'); }
-function getArrivalsData() { return readSheetData('Приход'); }
+function getArrivalsData() { 
+  const data = readSheetData('Приход');
+  return data.map(row => {
+    try {
+      const itemsJson = row['Позиции (JSON)'] || '[]';
+      row.items = JSON.parse(itemsJson);
+    } catch (e) {
+      row.items = [];
+    }
+    return row;
+  });
+}
 function getExpensesData() { return readSheetData('Расход'); }
 function getReturnsData() { return readSheetData('Возвраты'); }
 function getChatData() { return readSheetData('Чат'); }
@@ -238,9 +255,40 @@ function addArrivalRow(data) {
     data.addedBy || 'Руководитель',
     data.type || 'Плановый',
     data.comment || '',
+    JSON.stringify(data.items || []),
     new Date()
   ]);
   writeAudit('Приход', data.id, 'Создание', '', 'Приход: ' + data.amount + '₽');
+}
+
+function updateArrivalRow(id, data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Приход');
+  const allData = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      if (data.employeeId !== undefined) sheet.getRange(i + 1, 2).setValue(data.employeeId);
+      if (data.date !== undefined) sheet.getRange(i + 1, 4).setValue(data.date);
+      if (data.amount !== undefined) sheet.getRange(i + 1, 6).setValue(data.amount);
+      if (data.items !== undefined) sheet.getRange(i + 1, 11).setValue(JSON.stringify(data.items));
+      writeAudit('Приход', id, 'Изменение', '', JSON.stringify(data));
+      break;
+    }
+  }
+}
+
+function deleteArrivalRow(id) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Приход');
+  const allData = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      const arrivalData = allData[i];
+      sheet.deleteRow(i + 1);
+      writeAudit('Приход', id, 'Удаление', 'Приход: ' + arrivalData[5] + '₽', '');
+      break;
+    }
+  }
 }
 
 function addExpenseRow(data) {
@@ -528,11 +576,12 @@ function createSheet_Arrival(ss) {
   let sheet = ss.getSheetByName('Приход');
   if (!sheet) sheet = ss.insertSheet('Приход');
   
-  const headers = ['ID', 'Сотрудник_ID', 'ФИО сотрудника', 'Дата', 'Месяц', 'Сумма (₽)', 'Количество смен', 'Кем внесено', 'Тип', 'Комментарий', 'Дата внесения'];
+  const headers = ['ID', 'Сотрудник_ID', 'ФИО сотрудника', 'Дата', 'Месяц', 'Сумма (₽)', 'Количество смен', 'Кем внесено', 'Тип', 'Комментарий', 'Позиции (JSON)', 'Дата внесения'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   formatHeader(sheet, headers.length);
   
   sheet.setColumnWidth(3, 250);
+  sheet.setColumnWidth(11, 400);
   sheet.getRange('F2:F10000').setNumberFormat('#,##0.00');
 }
 

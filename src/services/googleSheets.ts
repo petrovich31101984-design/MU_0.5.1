@@ -167,6 +167,7 @@ export interface Arrival {
   addedBy: string;
   type: string;
   comment: string;
+  items?: Array<{ nomenclatureId: string; quantity: number; price: number; total: number }>;
 }
 
 export interface Expense {
@@ -276,6 +277,7 @@ export async function getArrivals(): Promise<Arrival[]> {
     addedBy: row['Кем внесено'] || '',
     type: row['Тип'] || 'Плановый',
     comment: row['Комментарий'] || '',
+    items: row.items || [],
   }));
 }
 
@@ -360,6 +362,14 @@ export async function deleteEmployee(id: string): Promise<void> {
 
 export async function addArrival(arrival: Partial<Arrival>): Promise<void> {
   await postData('addArrival', arrival);
+}
+
+export async function updateArrival(id: string, data: Partial<Arrival>): Promise<void> {
+  await postData('updateArrival', { id, data });
+}
+
+export async function deleteArrival(id: string): Promise<void> {
+  await postData('deleteArrival', { id });
 }
 
 export async function addExpense(expense: Partial<Expense>): Promise<void> {
