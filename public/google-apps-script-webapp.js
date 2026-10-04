@@ -136,7 +136,22 @@ function readSheetData(sheetName) {
     const obj = {};
     headers.forEach((h, i) => {
       const val = row[i];
-      obj[h] = val instanceof Date ? val.toISOString() : (val || '');
+      // Специальная обработка для поля "Месяц" - не конвертируем в ISO
+      if (h === 'Месяц') {
+        if (val instanceof Date) {
+          // Если это дата, конвертируем в формат ГГГГ-ММ
+          const year = val.getFullYear();
+          const month = String(val.getMonth() + 1).padStart(2, '0');
+          obj[h] = `${year}-${month}`;
+        } else {
+          obj[h] = val || '';
+        }
+      } else if (val instanceof Date) {
+        // Для остальных дат используем ISO формат
+        obj[h] = val.toISOString();
+      } else {
+        obj[h] = val || '';
+      }
     });
     return obj;
   });
@@ -154,20 +169,14 @@ function getNomenclatureData() { return readSheetData('Номенклатура'
 function getPricesData() { return readSheetData('Цены'); }
 function getArrivalsData() { 
   const data = readSheetData('Приход');
-  Logger.log('📊 Загружено записей прихода: ' + data.length);
-  if (data.length > 0) {
-    Logger.log('📋 Первая запись: ' + JSON.stringify(data[0]));
-  }
   return data.map(row => {
     const result = Object.assign({}, row);
     try {
       const itemsJson = row['Позиции (JSON)'] || '[]';
       result.items = JSON.parse(itemsJson);
     } catch (e) {
-      Logger.log('❌ Ошибка парсинга JSON: ' + e.message);
       result.items = [];
     }
-    Logger.log('📦 Обработана запись: ID=' + result['ID'] + ', Месяц=' + result['Месяц'] + ', Сумма=' + result['Сумма (₽)']);
     return result;
   });
 }
@@ -254,12 +263,27 @@ function deleteEmployeeRow(id) {
 function addArrivalRow(data) {
   Logger.log('💾 Добавление прихода: ' + JSON.stringify(data));
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Приход');
+  
+  // Конвертируем дату в ISO строку для сохранения
+  let dateValue = data.date || new Date();
+  if (dateValue instanceof Date) {
+    dateValue = dateValue.toISOString();
+  }
+  
+  // Убеждаемся, что месяц - это строка в формате ГГГГ-ММ
+  let monthValue = data.month || '';
+  if (monthValue instanceof Date) {
+    const year = monthValue.getFullYear();
+    const month = String(monthValue.getMonth() + 1).padStart(2, '0');
+    monthValue = `${year}-${month}`;
+  }
+  
   const rowData = [
     data.id || '',
     data.employeeId || '',
     data.employeeName || '',
-    data.date || new Date(),
-    data.month || '',
+    dateValue,
+    monthValue,
     data.amount || 0,
     data.shifts || 0,
     data.addedBy || 'Руководитель',
