@@ -1965,10 +1965,14 @@ function ArrivalCardModal({
     items: ((initialData as any)?.items || []) as ArrivalItem[]
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const filteredNomenclature = nomenclature.filter(n => 
-    selectedCategory === 'all' || n.category === selectedCategory
-  );
+  const filteredNomenclature = nomenclature.filter(n => {
+    const matchesCategory = selectedCategory === 'all' || n.category === selectedCategory;
+    const matchesSearch = searchQuery === '' || 
+      n.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const addItem = (item: gs.Nomenclature) => {
     const existingItem = form.items.find((i: ArrivalItem) => i.nomenclatureId === item.id);
@@ -2111,6 +2115,13 @@ function ArrivalCardModal({
           {/* Список номенклатуры для добавления */}
           <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
             <h4 className="text-sm font-semibold text-slate-700 mb-3">Доступные позиции</h4>
+            <input
+              type="text"
+              placeholder="Поиск по наименованию..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-2 mb-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
               {filteredNomenclature.map(item => (
                 <button
