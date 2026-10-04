@@ -832,10 +832,18 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
           employee={editingEmployee}
           employees={employees}
           onClose={() => setEditingEmployee(null)} 
-          onSave={async (id, updates) => {
-            await gs.updateEmployee(id, updates);
+          onSave={(id, updates) => {
+            // Закрываем окно сразу
             setEditingEmployee(null);
-            data.refresh();
+            
+            // Обновляем локальное состояние
+            setEmployees(employees.map(e => e.id === id ? { ...e, ...updates } : e));
+            
+            // Отправляем в Google Sheets в фоне
+            gs.updateEmployee(id, updates).catch(err => {
+              console.error('Ошибка обновления сотрудника:', err);
+              alert('Ошибка при сохранении изменений. Попробуйте ещё раз.');
+            });
           }}
         />
       )}
