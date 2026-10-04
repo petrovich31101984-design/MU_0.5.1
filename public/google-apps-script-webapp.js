@@ -605,7 +605,17 @@ function createSheet_Arrival(ss) {
   if (!sheet) sheet = ss.insertSheet('Приход');
   
   const headers = ['ID', 'Сотрудник_ID', 'ФИО сотрудника', 'Дата', 'Месяц', 'Сумма (₽)', 'Количество смен', 'Кем внесено', 'Тип', 'Комментарий', 'Позиции (JSON)', 'Дата внесения'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  
+  // Проверяем текущие заголовки
+  const currentHeaders = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
+  
+  // Если заголовки не совпадают, обновляем их
+  if (currentHeaders.length !== headers.length || 
+      !headers.every((h, i) => currentHeaders[i] === h)) {
+    // Устанавливаем новые заголовки
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+  
   formatHeader(sheet, headers.length);
   
   sheet.setColumnWidth(3, 250);
