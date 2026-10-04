@@ -78,7 +78,9 @@ function doPost(e) {
         updateArrivalRow(data.data.id, data.data.data);
         return jsonResponse({ success: true });
       case 'deleteArrival':
+        Logger.log('Вызываем deleteArrivalRow для ID: ' + data.data.id);
         deleteArrivalRow(data.data.id);
+        Logger.log('deleteArrivalRow выполнен успешно');
         return jsonResponse({ success: true });
       case 'addExpense':
         addExpenseRow(data.data);
@@ -262,7 +264,14 @@ function addArrivalRow(data) {
 }
 
 function updateArrivalRow(id, data) {
+  Logger.log('updateArrivalRow вызван для ID: ' + id);
+  
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Приход');
+  if (!sheet) {
+    Logger.log('Лист "Приход" не найден!');
+    throw new Error('Лист "Приход" не найден');
+  }
+  
   const allData = sheet.getDataRange().getValues();
   
   for (let i = 1; i < allData.length; i++) {
@@ -272,22 +281,41 @@ function updateArrivalRow(id, data) {
       if (data.amount !== undefined) sheet.getRange(i + 1, 6).setValue(data.amount);
       if (data.items !== undefined) sheet.getRange(i + 1, 11).setValue(JSON.stringify(data.items));
       writeAudit('Приход', id, 'Изменение', '', JSON.stringify(data));
+      Logger.log('Приход успешно обновлён');
       break;
     }
   }
 }
 
 function deleteArrivalRow(id) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Приход');
-  const allData = sheet.getDataRange().getValues();
+  Logger.log('deleteArrivalRow вызван для ID: ' + id);
   
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Приход');
+  if (!sheet) {
+    Logger.log('Лист "Приход" не найден!');
+    throw new Error('Лист "Приход" не найден');
+  }
+  
+  const allData = sheet.getDataRange().getValues();
+  Logger.log('Всего строк в таблице: ' + allData.length);
+  
+  let found = false;
   for (let i = 1; i < allData.length; i++) {
+    Logger.log('Проверяем строку ' + i + ': ID=' + allData[i][0] + ', ищем=' + id);
     if (String(allData[i][0]) === String(id)) {
+      Logger.log('Найдена строка для удаления: ' + i);
       const arrivalData = allData[i];
       sheet.deleteRow(i + 1);
       writeAudit('Приход', id, 'Удаление', 'Приход: ' + arrivalData[5] + '₽', '');
+      Logger.log('Строка удалена успешно');
+      found = true;
       break;
     }
+  }
+  
+  if (!found) {
+    Logger.log('Приход с ID ' + id + ' не найден в таблице!');
+    throw new Error('Приход с ID ' + id + ' не найден');
   }
 }
 
