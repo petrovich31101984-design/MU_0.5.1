@@ -155,13 +155,14 @@ function getPricesData() { return readSheetData('Цены'); }
 function getArrivalsData() { 
   const data = readSheetData('Приход');
   return data.map(row => {
+    const result = Object.assign({}, row);
     try {
       const itemsJson = row['Позиции (JSON)'] || '[]';
-      row.items = JSON.parse(itemsJson);
+      result.items = JSON.parse(itemsJson);
     } catch (e) {
-      row.items = [];
+      result.items = [];
     }
-    return row;
+    return result;
   });
 }
 function getExpensesData() { return readSheetData('Расход'); }
