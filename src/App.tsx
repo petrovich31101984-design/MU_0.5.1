@@ -1727,7 +1727,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
 
       <div className="flex justify-between items-center">
         <div className="text-sm text-slate-600">
-          Приход за {currentMonth}: <span className="text-emerald-600 font-bold">
+          ПРИХОД ЗА {new Date().toLocaleString('ru-RU', { month: 'long' }).toUpperCase()} {new Date().getFullYear()}: <span className="text-emerald-600 font-bold">
             {arrivals.filter(a => a.month === currentMonth).reduce((s, a) => s + a.amount, 0).toLocaleString('ru-RU')} ₽
           </span>
         </div>
