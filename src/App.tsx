@@ -83,7 +83,7 @@ function useData() {
   };
 }
 
-type Page = 'dashboard' | 'employees' | 'nomenclature' | 'operations' | 'stock' | 'chat' | 'reports' | 'audit' | 'settings';
+type Page = 'dashboard' | 'employees' | 'nomenclature' | 'arrival' | 'expense' | 'balance' | 'chat' | 'reports' | 'audit' | 'settings';
 
 // ============ СТРАНИЦА НАСТРОЙКИ ============
 function SetupPage() {
@@ -235,8 +235,9 @@ export default function App() {
     { id: 'dashboard', label: 'Панель руководителя', icon: '👨‍⚕️' },
     { id: 'employees', label: 'Сотрудники', icon: '👥' },
     { id: 'nomenclature', label: 'Номенклатура', icon: '💊' },
-    { id: 'operations', label: 'Операции', icon: '📋' },
-    { id: 'stock', label: 'Остатки', icon: '📦' },
+    { id: 'arrival', label: 'Приход к сотруднику', icon: '💰' },
+    { id: 'expense', label: 'Расход у сотрудника', icon: '📤' },
+    { id: 'balance', label: 'Остаток у сотрудника', icon: '📊' },
     { id: 'chat', label: 'Сообщения', icon: '💬' },
     { id: 'reports', label: 'Отчёты', icon: '📈' },
     { id: 'audit', label: 'Журнал', icon: '📝' },
@@ -248,8 +249,9 @@ export default function App() {
       case 'dashboard': return <Dashboard data={data} />;
       case 'employees': return <EmployeesPage data={data} />;
       case 'nomenclature': return <NomenclaturePage data={data} />;
-      case 'operations': return <OperationsPage data={data} />;
-      case 'stock': return <StockPage data={data} />;
+      case 'arrival': return <ArrivalPage data={data} />;
+      case 'expense': return <ExpensePage data={data} />;
+      case 'balance': return <BalancePage data={data} />;
       case 'chat': return <ChatPage data={data} />;
       case 'reports': return <ReportsPage data={data} />;
       case 'audit': return <AuditPage data={data} />;
@@ -1666,217 +1668,136 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
   );
 }
 
-// ============ ОПЕРАЦИИ ============
-function OperationsPage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, nomenclature, arrivals, expenses, returns } = data;
-  const [subTab, setSubTab] = useState<'arrival' | 'expense' | 'returns'>('arrival');
+// ============ ПРИХОД К СОТРУДНИКУ ============
+function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
+  const { employees, arrivals, setArrivals } = data;
   const [showAddArrival, setShowAddArrival] = useState(false);
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  const handleAddArrival = async (form: any) => {
+    setShowAddArrival(false);
+    const newArrival = {
+      id: `ARR-${Date.now()}`,
+      ...form,
+      date: new Date().toISOString().split('T')[0],
+      month: currentMonth,
+      addedBy: 'Руководитель',
+    };
+    setArrivals([...arrivals, newArrival]);
+    gs.addArrival(newArrival).catch(err => {
+      console.error('Ошибка добавления прихода:', err);
+      alert('Ошибка при добавлении прихода. Попробуйте ещё раз.');
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Операции</h2>
-        <p className="text-slate-500 text-sm mt-1">Приход, расход и возвраты</p>
+        <h2 className="text-2xl font-bold text-slate-800">💰 Приход к сотруднику</h2>
+        <p className="text-slate-500 text-sm mt-1">Управление поступлениями</p>
       </div>
 
-      <div className="flex gap-2 bg-white rounded-xl p-1 border border-slate-200 shadow-sm">
-        <button onClick={() => setSubTab('arrival')}
-          className={`flex-1 py-2.5 rounded-lg text-sm font-medium ${subTab === 'arrival' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>💰 Приход</button>
-        <button onClick={() => setSubTab('expense')}
-          className={`flex-1 py-2.5 rounded-lg text-sm font-medium ${subTab === 'expense' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>📤 Расход</button>
-        <button onClick={() => setSubTab('returns')}
-          className={`flex-1 py-2.5 rounded-lg text-sm font-medium relative ${subTab === 'returns' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>
-          ↩️ Возвраты
-          {returns.filter(r => r.status === 'Новый').length > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
-              {returns.filter(r => r.status === 'Новый').length}
-            </span>
-          )}
-        </button>
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-slate-600">
+          Приход за {currentMonth}: <span className="text-emerald-600 font-bold">
+            {arrivals.filter(a => a.month === currentMonth).reduce((s, a) => s + a.amount, 0).toLocaleString('ru-RU')} ₽
+          </span>
+        </div>
+        <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Внести приход</button>
       </div>
 
-      {subTab === 'arrival' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-slate-600">
-              Приход за {currentMonth}: <span className="text-emerald-600 font-bold">
-                {arrivals.filter(a => a.month === currentMonth).reduce((s, a) => s + a.amount, 0).toLocaleString('ru-RU')} ₽
-              </span>
-            </div>
-            <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Внести приход</button>
-          </div>
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-200 text-left bg-slate-50">
-                  <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Дата</th>
-                  <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
-                  <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Тип</th>
-                  <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Сумма (₽)</th>
-                  <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Смены</th>
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-slate-200 text-left bg-slate-50">
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Дата</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Тип</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Сумма (₽)</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Смены</th>
+            </tr>
+          </thead>
+          <tbody>
+            {arrivals.sort((a, b) => b.date.localeCompare(a.date)).map(arr => {
+              const emp = employees.find(e => e.id === arr.employeeId);
+              return (
+                <tr key={arr.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-5 py-3 text-sm text-slate-700">{arr.date}</td>
+                  <td className="px-5 py-3 text-sm text-slate-800">{emp?.fullName || arr.employeeId}</td>
+                  <td className="px-5 py-3">
+                    <span className={`px-2 py-1 rounded-full text-xs ${arr.type === 'Плановый' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{arr.type}</span>
+                  </td>
+                  <td className="px-5 py-3 text-right text-sm font-semibold text-emerald-600">{arr.amount.toLocaleString('ru-RU')} ₽</td>
+                  <td className="px-5 py-3 text-right text-sm text-slate-700">{arr.shifts}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {arrivals.sort((a, b) => b.date.localeCompare(a.date)).map(arr => {
-                  const emp = employees.find(e => e.id === arr.employeeId);
-                  return (
-                    <tr key={arr.id} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="px-5 py-3 text-sm text-slate-700">{arr.date}</td>
-                      <td className="px-5 py-3 text-sm text-slate-800">{emp?.fullName || arr.employeeId}</td>
-                      <td className="px-5 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs ${arr.type === 'Плановый' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{arr.type}</span>
-                      </td>
-                      <td className="px-5 py-3 text-right text-sm font-semibold text-emerald-600">{arr.amount.toLocaleString('ru-RU')} ₽</td>
-                      <td className="px-5 py-3 text-right text-sm text-slate-700">{arr.shifts}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {arrivals.length === 0 && (
-              <div className="p-8 text-center text-slate-500"><div className="text-3xl mb-2">💰</div><p>Нет записей о приходе</p></div>
-            )}
-          </div>
-          {showAddArrival && <AddArrivalModal employees={employees.filter(e => e.status === 'Активен')} currentMonth={currentMonth}
-            onClose={() => setShowAddArrival(false)} onAdd={async (form) => {
-              await gs.addArrival({
-                id: `ARR-${String(arrivals.length + 1).padStart(3, '0')}`, ...form,
-                date: new Date().toISOString().split('T')[0], month: currentMonth, addedBy: 'Руководитель',
-              });
-              setShowAddArrival(false); data.refresh();
-            }} />}
-        </div>
-      )}
+              );
+            })}
+          </tbody>
+        </table>
+        {arrivals.length === 0 && (
+          <div className="p-8 text-center text-slate-500"><p>Нет записей о приходе</p></div>
+        )}
+      </div>
 
-      {subTab === 'expense' && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 text-left bg-slate-50">
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Дата</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Пациент</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Препарат</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Кол-во</th>
-              </tr>
-            </thead>
-            <tbody>
-              {expenses.slice(0, 100).map(exp => {
-                const emp = employees.find(e => e.id === exp.employeeId);
-                const nom = nomenclature.find(n => n.id === exp.nomenclatureId);
-                return (
-                  <tr key={exp.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-5 py-3 text-sm text-slate-700">{exp.callDate}</td>
-                    <td className="px-5 py-3 text-sm text-slate-800">{(emp?.fullName || '').split(' ').slice(0, 2).join(' ')}</td>
-                    <td className="px-5 py-3">
-                      <div className="text-sm text-slate-800">{exp.patientName}</div>
-                      <div className="text-xs text-slate-500">ДР: {exp.patientBirthDate}</div>
-                    </td>
-                    <td className="px-5 py-3 text-sm text-slate-700">{nom?.name}</td>
-                    <td className="px-5 py-3 text-right text-sm text-slate-800">{exp.quantity} {nom?.unit}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {expenses.length === 0 && (
-            <div className="p-8 text-center text-slate-500"><div className="text-3xl mb-2">📤</div><p>Нет записей о расходе</p></div>
-          )}
-        </div>
-      )}
-
-      {subTab === 'returns' && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 text-left bg-slate-50">
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Дата</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Препарат</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Кол-во</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Причина</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Статус</th>
-              </tr>
-            </thead>
-            <tbody>
-              {returns.map(ret => {
-                const emp = employees.find(e => e.id === ret.employeeId);
-                const nom = nomenclature.find(n => n.id === ret.nomenclatureId);
-                return (
-                  <tr key={ret.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-5 py-3 text-sm text-slate-700">{ret.date}</td>
-                    <td className="px-5 py-3 text-sm text-slate-800">{emp?.fullName}</td>
-                    <td className="px-5 py-3 text-sm text-slate-700">{nom?.name}</td>
-                    <td className="px-5 py-3 text-right text-sm text-slate-800">{ret.quantity} {nom?.unit}</td>
-                    <td className="px-5 py-3 text-sm text-slate-600">{ret.reason}</td>
-                    <td className="px-5 py-3 text-center">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        ret.status === 'Новый' ? 'bg-yellow-100 text-yellow-700' :
-                        ret.status === 'Принят' ? 'bg-emerald-100 text-emerald-700' :
-                        ret.status === 'Скорректирован' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
-                      }`}>{ret.status}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {returns.length === 0 && (
-            <div className="p-8 text-center text-slate-500"><div className="text-3xl mb-2">↩️</div><p>Нет возвратов</p></div>
-          )}
-        </div>
-      )}
+      {showAddArrival && <AddArrivalModal employees={employees.filter(e => e.status === 'Активен')} currentMonth={currentMonth}
+        onClose={() => setShowAddArrival(false)} onAdd={handleAddArrival} />}
     </div>
   );
 }
 
-function AddArrivalModal({ employees, onClose, onAdd }: { employees: gs.Employee[]; currentMonth: string; onClose: () => void; onAdd: (form: any) => void }) {
-  const [form, setForm] = useState({ employeeId: employees[0]?.id || '', amount: 0, shifts: 0, type: 'Плановый' as 'Плановый' | 'Дополнительный', comment: '' });
+// ============ РАСХОД У СОТРУДНИКА ============
+function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
+  const { employees, nomenclature, expenses } = data;
+
   return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl">
-        <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800">Внести приход</h3>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="text-sm text-slate-600 mb-1 block">Сотрудник</label>
-            <select value={form.employeeId} onChange={e => setForm({ ...form, employeeId: e.target.value })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500">
-              {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.fullName}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm text-slate-600 mb-1 block">Сумма (₽)</label>
-            <input type="number" value={form.amount || ''} onChange={e => setForm({ ...form, amount: parseFloat(e.target.value) || 0 })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" />
-          </div>
-          <div>
-            <label className="text-sm text-slate-600 mb-1 block">Смены</label>
-            <input type="number" value={form.shifts || ''} onChange={e => setForm({ ...form, shifts: parseInt(e.target.value) || 0 })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" />
-          </div>
-          <div>
-            <label className="text-sm text-slate-600 mb-1 block">Комментарий</label>
-            <input type="text" value={form.comment} onChange={e => setForm({ ...form, comment: e.target.value })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" />
-          </div>
-        </div>
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
-          <button onClick={() => onAdd(form)} disabled={form.amount <= 0}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium">Внести</button>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">📤 Расход у сотрудника</h2>
+        <p className="text-slate-500 text-sm mt-1">История расходов</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-slate-200 text-left bg-slate-50">
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Дата</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Пациент</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Препарат</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Кол-во</th>
+            </tr>
+          </thead>
+          <tbody>
+            {expenses.slice(0, 100).map(exp => {
+              const emp = employees.find(e => e.id === exp.employeeId);
+              const nom = nomenclature.find(n => n.id === exp.nomenclatureId);
+              return (
+                <tr key={exp.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-5 py-3 text-sm text-slate-700">{exp.callDate}</td>
+                  <td className="px-5 py-3 text-sm text-slate-800">{(emp?.fullName || '').split(' ').slice(0, 2).join(' ')}</td>
+                  <td className="px-5 py-3">
+                    <div className="text-sm text-slate-800">{exp.patientName}</div>
+                    <div className="text-xs text-slate-500">ДР: {exp.patientBirthDate}</div>
+                  </td>
+                  <td className="px-5 py-3 text-sm text-slate-700">{nom?.name}</td>
+                  <td className="px-5 py-3 text-right text-sm text-slate-800">{exp.quantity} {nom?.unit}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {expenses.length === 0 && (
+          <div className="p-8 text-center text-slate-500"><p>Нет записей о расходе</p></div>
+        )}
       </div>
     </div>
   );
 }
 
-// ============ ОСТАТКИ ============
-function StockPage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, nomenclature, expenses, returns } = data;
+// ============ ОСТАТОК У СОТРУДНИКА ============
+function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
+  const { employees, nomenclature, arrivals, expenses, returns } = data;
   const activeEmployees = employees.filter(e => e.status === 'Активен');
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1902,7 +1823,7 @@ function StockPage({ data }: { data: ReturnType<typeof useData> }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Остатки</h2>
+        <h2 className="text-2xl font-bold text-slate-800">📊 Остаток у сотрудника</h2>
         <p className="text-slate-500 text-sm mt-1">Период: {currentMonth}</p>
       </div>
 
@@ -1952,8 +1873,50 @@ function StockPage({ data }: { data: ReturnType<typeof useData> }) {
           </tbody>
         </table>
         {stockByNomenclature().length === 0 && (
-          <div className="p-8 text-center text-slate-500"><div className="text-3xl mb-2">📦</div><p>Нет данных об остатках</p></div>
+          <div className="p-8 text-center text-slate-500"><p>Нет данных об остатках</p></div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function AddArrivalModal({ employees, onClose, onAdd }: { employees: gs.Employee[]; currentMonth: string; onClose: () => void; onAdd: (form: any) => void }) {
+  const [form, setForm] = useState({ employeeId: employees[0]?.id || '', amount: 0, shifts: 0, type: 'Плановый' as 'Плановый' | 'Дополнительный', comment: '' });
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-lg font-bold text-slate-800">Внести приход</h3>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Сотрудник</label>
+            <select value={form.employeeId} onChange={e => setForm({ ...form, employeeId: e.target.value })}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500">
+              {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.fullName}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Сумма (₽)</label>
+            <input type="number" value={form.amount || ''} onChange={e => setForm({ ...form, amount: parseFloat(e.target.value) || 0 })}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Смены</label>
+            <input type="number" value={form.shifts || ''} onChange={e => setForm({ ...form, shifts: parseInt(e.target.value) || 0 })}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Комментарий</label>
+            <input type="text" value={form.comment} onChange={e => setForm({ ...form, comment: e.target.value })}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
+          <button onClick={() => onAdd(form)} disabled={form.amount <= 0}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium">Внести</button>
+        </div>
       </div>
     </div>
   );
