@@ -1676,6 +1676,11 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  console.log('🔍 Текущий месяц для фильтрации:', currentMonth);
+  console.log('📋 Все приходы:', arrivals);
+  console.log('✅ Приходы за текущий месяц:', arrivals.filter(a => a.month === currentMonth));
+  console.log('💰 Сумма приходов за текущий месяц:', arrivals.filter(a => a.month === currentMonth).reduce((s, a) => s + a.amount, 0));
+
   const handleAddArrival = async (form: any) => {
     setShowAddArrival(false);
     const newArrival = {
@@ -1685,11 +1690,14 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
       month: currentMonth,
       addedBy: 'Руководитель',
     };
+    console.log('💾 Отправляем новый приход в Google Sheets:', newArrival);
     setArrivals([...arrivals, newArrival]);
-    gs.addArrival(newArrival).catch(err => {
-      console.error('Ошибка добавления прихода:', err);
-      alert('Ошибка при добавлении прихода. Попробуйте ещё раз.');
-    });
+    gs.addArrival(newArrival)
+      .then(() => console.log('✅ Приход успешно сохранён в Google Sheets'))
+      .catch(err => {
+        console.error('❌ Ошибка добавления прихода:', err);
+        alert('Ошибка при добавлении прихода. Попробуйте ещё раз.');
+      });
   };
 
   const handleEditArrival = async (form: any) => {

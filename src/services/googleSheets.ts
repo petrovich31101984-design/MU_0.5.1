@@ -267,18 +267,23 @@ export async function getNomenclature(): Promise<Nomenclature[]> {
 
 export async function getArrivals(): Promise<Arrival[]> {
   const data = await fetchData('getArrivals');
-  return data.map((row: any) => ({
-    id: row['ID'] || '',
-    employeeId: row['Сотрудник_ID'] || '',
-    date: row['Дата'] || '',
-    month: row['Месяц'] || '',
-    amount: parseFloat(row['Сумма (₽)'] || '0'),
-    shifts: parseInt(row['Количество смен'] || '0'),
-    addedBy: row['Кем внесено'] || '',
-    type: row['Тип'] || 'Плановый',
-    comment: row['Комментарий'] || '',
-    items: row.items || [],
-  }));
+  console.log('📊 Загруженные данные прихода из Google Sheets:', data);
+  return data.map((row: any) => {
+    const arrival = {
+      id: row['ID'] || '',
+      employeeId: row['Сотрудник_ID'] || '',
+      date: row['Дата'] || '',
+      month: row['Месяц'] || '',
+      amount: parseFloat(row['Сумма (₽)'] || '0'),
+      shifts: parseInt(row['Количество смен'] || '0'),
+      addedBy: row['Кем внесено'] || '',
+      type: row['Тип'] || 'Плановый',
+      comment: row['Комментарий'] || '',
+      items: row.items || [],
+    };
+    console.log('📦 Обработанный приход:', arrival);
+    return arrival;
+  });
 }
 
 export async function getExpenses(): Promise<Expense[]> {
