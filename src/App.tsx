@@ -1247,7 +1247,6 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
         </table>
         {filtered.length === 0 && (
           <div className="p-8 text-center text-slate-500">
-            <div className="text-3xl mb-2">💊</div>
             <p>Номенклатура пуста</p>
           </div>
         )}
