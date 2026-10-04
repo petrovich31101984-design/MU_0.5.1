@@ -154,6 +154,7 @@ export interface Nomenclature {
   manufacturer: string;
   active: boolean;
   currentPrice: number;
+  packageQuantity: number;
 }
 
 export interface Arrival {
@@ -258,6 +259,7 @@ export async function getNomenclature(): Promise<Nomenclature[]> {
       manufacturer: row['Производитель'] || '',
       active: row['Актуальна'] === 'ДА',
       currentPrice: parseFloat(currentPriceRow?.['Цена за ед. (₽)'] || '0'),
+      packageQuantity: parseInt(row['Количество в упаковке'] || '1'),
     };
   });
 }

@@ -330,6 +330,7 @@ function addNomenclatureRow(data) {
     data.category || 'ЛС ПКУ',
     data.unit || 'Штуки',
     data.manufacturer || '',
+    data.packageQuantity || 1, // Количество в упаковке
     '', // Штрих-код
     data.active !== false ? 'ДА' : 'НЕТ',
     new Date(),
@@ -481,7 +482,7 @@ function createSheet_Nomenclature(ss) {
   let sheet = ss.getSheetByName('Номенклатура');
   if (!sheet) sheet = ss.insertSheet('Номенклатура');
   
-  const headers = ['ID', 'Название', 'Категория', 'Ед. измерения', 'Производитель', 'Штрих-код', 'Актуальна', 'Дата создания', 'Примечание'];
+  const headers = ['ID', 'Название', 'Категория', 'Ед. измерения', 'Производитель', 'Количество в упаковке', 'Штрих-код', 'Актуальна', 'Дата создания', 'Примечание'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   formatHeader(sheet, headers.length);
   
