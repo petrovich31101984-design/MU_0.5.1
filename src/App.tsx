@@ -1673,6 +1673,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
   const { employees, nomenclature, arrivals, setArrivals } = data;
   const [showAddArrival, setShowAddArrival] = useState(false);
   const [editingArrival, setEditingArrival] = useState<gs.Arrival | null>(null);
+  const [viewingArrival, setViewingArrival] = useState<gs.Arrival | null>(null);
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
@@ -1759,7 +1760,12 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
                       minute: '2-digit'
                     })}
                   </td>
-                  <td className="px-5 py-3 text-sm text-slate-800">{emp?.fullName || arr.employeeId}</td>
+                  <td 
+                    className="px-5 py-3 text-sm text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+                    onClick={() => setViewingArrival(arr)}
+                  >
+                    {emp?.fullName || arr.employeeId}
+                  </td>
                   <td className="px-5 py-3">
                     <span className={`px-2 py-1 rounded-full text-xs ${arr.type === 'Плановый' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{arr.type}</span>
                   </td>
@@ -1805,6 +1811,13 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
         initialData={editingArrival}
         onClose={() => setEditingArrival(null)} 
         onAdd={handleEditArrival} 
+      />}
+
+      {viewingArrival && <ViewArrivalModal
+        arrival={viewingArrival}
+        employees={employees}
+        nomenclature={nomenclature}
+        onClose={() => setViewingArrival(null)}
       />}
     </div>
   );
@@ -1939,6 +1952,107 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
         {stockByNomenclature().length === 0 && (
           <div className="p-8 text-center text-slate-500"><p>Нет данных об остатках</p></div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ============ МОДАЛЬНОЕ ОКНО ПРОСМОТРА КАРТЫ ПРИХОДА ============
+function ViewArrivalModal({
+  arrival,
+  employees,
+  nomenclature,
+  onClose
+}: {
+  arrival: gs.Arrival;
+  employees: gs.Employee[];
+  nomenclature: gs.Nomenclature[];
+  onClose: () => void;
+}) {
+  const emp = employees.find(e => e.id === arrival.employeeId);
+  const items = (arrival as any).items || [];
+
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-800">📋 Карта прихода</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Основная информация */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Дата</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                {new Date(arrival.date).toLocaleDateString('ru-RU')}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Сотрудник</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                {emp?.fullName || arrival.employeeId}
+              </div>
+            </div>
+          </div>
+
+          {/* Позиции */}
+          {items.length > 0 && (
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+              <div className="p-4 bg-slate-50 border-b border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-700">Позиции прихода</h4>
+              </div>
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col style={{ width: '50%' }} />
+                  <col style={{ width: '120px' }} />
+                  <col style={{ width: '150px' }} />
+                  <col style={{ width: '150px' }} />
+                </colgroup>
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase">Наименование</th>
+                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-600 uppercase">Кол-во</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Цена за ед.</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Сумма</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item: any) => {
+                    const nom = nomenclature.find(n => n.id === item.nomenclatureId);
+                    return (
+                      <tr key={item.nomenclatureId} className="border-b border-slate-100">
+                        <td className="px-4 py-3 text-sm text-slate-800 truncate">{nom?.name}</td>
+                        <td className="px-4 py-3 text-center text-sm text-slate-800">{item.quantity}</td>
+                        <td className="px-4 py-3 text-right text-sm text-slate-700">{item.price.toLocaleString('ru-RU')} ₽</td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600">{item.total.toLocaleString('ru-RU')} ₽</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-slate-50 font-bold">
+                    <td colSpan={3} className="px-4 py-3 text-right text-sm text-slate-800">ИТОГО:</td>
+                    <td className="px-4 py-3 text-right text-lg text-emerald-600">{arrival.amount.toLocaleString('ru-RU')} ₽</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+
+          {items.length === 0 && (
+            <div className="text-center text-slate-500 py-8">
+              <p>Нет данных о позициях</p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-slate-200 flex justify-end">
+          <button onClick={onClose} className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg text-white font-medium">
+            Закрыть
+          </button>
+        </div>
       </div>
     </div>
   );
