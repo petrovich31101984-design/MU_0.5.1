@@ -1745,27 +1745,29 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
         <p className="text-slate-500 text-sm mt-1">Управление поступлениями</p>
       </div>
 
-      <div className="flex items-center gap-4">
-        <select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-        >
-          {generateMonthOptions().map(month => (
-            <option key={month.value} value={month.value}>
-              {month.label}
-            </option>
-          ))}
-        </select>
-        <div className="text-sm text-slate-600">
-          ПРИХОД ЗА {selectedMonthName.toUpperCase()}: <span className="text-emerald-600 font-bold">
-            {totalAmount.toLocaleString('ru-RU')} ₽
-          </span>
+      <div className="space-y-3">
+        <div className="flex items-center gap-4">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          >
+            {generateMonthOptions().map(month => (
+              <option key={month.value} value={month.value}>
+                {month.label}
+              </option>
+            ))}
+          </select>
+          <div className="text-sm text-slate-600">
+            ПРИХОД ЗА {selectedMonthName.toUpperCase()}: <span className="text-emerald-600 font-bold">
+              {totalAmount.toLocaleString('ru-RU')} ₽
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div className="flex justify-end">
-        <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Создать карту прихода</button>
+        <div className="flex justify-end">
+          <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Создать карту прихода</button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
