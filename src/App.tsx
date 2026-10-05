@@ -1758,8 +1758,8 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
         </select>
       </div>
 
-      <div className="flex justify-between items-baseline">
-        <div className="text-sm text-slate-600">
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-slate-600 py-2">
           ПРИХОД ЗА {selectedMonthName.toUpperCase()}: <span className="text-emerald-600 font-bold">
             {totalAmount.toLocaleString('ru-RU')} ₽
           </span>
