@@ -1758,7 +1758,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
         </select>
       </div>
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-baseline">
         <div className="text-sm text-slate-600">
           ПРИХОД ЗА {selectedMonthName.toUpperCase()}: <span className="text-emerald-600 font-bold">
             {totalAmount.toLocaleString('ru-RU')} ₽
