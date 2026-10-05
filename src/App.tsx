@@ -1740,12 +1740,11 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">📥 Приход к сотруднику</h2>
-        <p className="text-slate-500 text-sm mt-1">Управление поступлениями</p>
-      </div>
-
-      <div className="space-y-3">
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">📥 Приход к сотруднику</h2>
+          <p className="text-slate-500 text-sm mt-1">Управление поступлениями</p>
+        </div>
         <div className="flex items-center gap-4">
           <select
             value={selectedMonth}
@@ -1764,10 +1763,10 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
             </span>
           </div>
         </div>
+      </div>
 
-        <div className="flex justify-end">
-          <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Создать карту прихода</button>
-        </div>
+      <div className="flex justify-end">
+        <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Создать карту прихода</button>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
