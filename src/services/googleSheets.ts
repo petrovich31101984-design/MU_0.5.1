@@ -183,6 +183,31 @@ export interface Expense {
   callId: string;
 }
 
+export interface ExpenseItem {
+  nomenclatureId: string;
+  name: string;
+  category: string;
+  quantity: number;
+  pricePerUnit: number;
+  total: number;
+}
+
+export interface ExpenseSheet {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  patientName: string;
+  patientBirthDate: string;
+  date: string;
+  month: string;
+  callCategory: string;
+  therapyName: string;
+  therapyCost: number;
+  items: ExpenseItem[];
+  totalAmount: number;
+  archived: boolean;
+}
+
 export interface ReturnOperation {
   id: string;
   employeeId: string;
@@ -370,6 +395,37 @@ export async function updateArrival(id: string, data: Partial<Arrival>): Promise
 
 export async function deleteArrival(id: string): Promise<void> {
   await postData('deleteArrival', { id });
+}
+
+export async function getExpenseSheets(): Promise<ExpenseSheet[]> {
+  const data = await fetchData('getExpenseSheets');
+  return data.map((row: any) => ({
+    id: row['ID'] || '',
+    employeeId: row['Сотрудник_ID'] || '',
+    employeeName: row['Сотрудник'] || '',
+    patientName: row['Пациент'] || '',
+    patientBirthDate: row['Дата рождения пациента'] || '',
+    date: row['Дата'] || '',
+    month: row['Месяц'] || '',
+    callCategory: row['Категория выезда'] || '',
+    therapyName: row['Название терапии'] || '',
+    therapyCost: parseFloat(row['Стоимость терапии'] || '0'),
+    items: row.items || [],
+    totalAmount: parseFloat(row['Итого по препаратам'] || '0'),
+    archived: row['Архив'] === 'ДА',
+  }));
+}
+
+export async function addExpenseSheet(sheet: Partial<ExpenseSheet>): Promise<void> {
+  await postData('addExpenseSheet', sheet);
+}
+
+export async function updateExpenseSheet(id: string, data: Partial<ExpenseSheet>): Promise<void> {
+  await postData('updateExpenseSheet', { id, data });
+}
+
+export async function archiveExpenseSheet(id: string): Promise<void> {
+  await postData('archiveExpenseSheet', { id });
 }
 
 export async function addExpense(expense: Partial<Expense>): Promise<void> {

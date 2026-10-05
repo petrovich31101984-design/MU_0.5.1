@@ -103,6 +103,17 @@ function doPost(e) {
       case 'deleteNomenclature':
         deleteNomenclatureRow(data.data.id);
         return jsonResponse({ success: true });
+      case 'getExpenseSheets':
+        return jsonResponse(getExpenseSheetsData());
+      case 'addExpenseSheet':
+        addExpenseSheetRow(data.data);
+        return jsonResponse({ success: true });
+      case 'updateExpenseSheet':
+        updateExpenseSheetRow(data.data.id, data.data.data);
+        return jsonResponse({ success: true });
+      case 'archiveExpenseSheet':
+        archiveExpenseSheetRow(data.data.id);
+        return jsonResponse({ success: true });
       case 'setupDatabase':
         setupDatabase();
         return jsonResponse({ success: true, message: 'База данных создана' });
@@ -182,6 +193,19 @@ function getArrivalsData() {
 }
 function getExpensesData() { return readSheetData('Расход'); }
 function getReturnsData() { return readSheetData('Возвраты'); }
+function getExpenseSheetsData() { 
+  const data = readSheetData('Листы расхода');
+  return data.map(row => {
+    const result = Object.assign({}, row);
+    try {
+      const itemsJson = row['Позиции (JSON)'] || '[]';
+      result.items = JSON.parse(itemsJson);
+    } catch (e) {
+      result.items = [];
+    }
+    return result;
+  });
+}
 function getChatData() { return readSheetData('Чат'); }
 function getAuditLogData() { return readSheetData('Журнал изменений'); }
 
@@ -400,6 +424,60 @@ function addReturnRow(data) {
   writeAudit('Возвраты', data.id, 'Создание', '', 'Возврат: ' + data.quantity);
 }
 
+function addExpenseSheetRow(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
+  sheet.appendRow([
+    data.id || '',
+    data.employeeId || '',
+    data.employeeName || '',
+    data.patientName || '',
+    data.patientBirthDate || '',
+    data.date || new Date(),
+    data.month || '',
+    data.callCategory || '',
+    data.therapyName || '',
+    data.therapyCost || 0,
+    JSON.stringify(data.items || []),
+    data.totalAmount || 0,
+    data.archived ? 'ДА' : 'НЕТ',
+    new Date()
+  ]);
+  writeAudit('Листы расхода', data.id, 'Создание', '', 'Лист расхода: ' + data.patientName);
+}
+
+function updateExpenseSheetRow(id, data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
+  const allData = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      if (data.patientName !== undefined) sheet.getRange(i + 1, 4).setValue(data.patientName);
+      if (data.patientBirthDate !== undefined) sheet.getRange(i + 1, 5).setValue(data.patientBirthDate);
+      if (data.date !== undefined) sheet.getRange(i + 1, 6).setValue(data.date);
+      if (data.callCategory !== undefined) sheet.getRange(i + 1, 8).setValue(data.callCategory);
+      if (data.therapyName !== undefined) sheet.getRange(i + 1, 9).setValue(data.therapyName);
+      if (data.therapyCost !== undefined) sheet.getRange(i + 1, 10).setValue(data.therapyCost);
+      if (data.items !== undefined) sheet.getRange(i + 1, 11).setValue(JSON.stringify(data.items));
+      if (data.totalAmount !== undefined) sheet.getRange(i + 1, 12).setValue(data.totalAmount);
+      writeAudit('Листы расхода', id, 'Изменение', '', JSON.stringify(data));
+      break;
+    }
+  }
+}
+
+function archiveExpenseSheetRow(id) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
+  const allData = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      sheet.getRange(i + 1, 13).setValue('ДА');
+      writeAudit('Листы расхода', id, 'Архивирование', '', '');
+      break;
+    }
+  }
+}
+
 function addChatMessageRow(data) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Чат');
   sheet.appendRow([
@@ -563,6 +641,7 @@ function setupDatabase() {
   createSheet_Arrival(ss);
   createSheet_Expenses(ss);
   createSheet_Returns(ss);
+  createSheet_ExpenseSheets(ss);
   createSheet_InitialStock(ss);
   createSheet_Chat(ss);
   createSheet_AuditLog(ss);
@@ -684,6 +763,23 @@ function createSheet_Returns(ss) {
   
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInList(['Новый', 'Принят', 'Отклонён', 'Скорректирован']).build();
   sheet.getRange('J2:J10000').setDataValidation(statusRule);
+}
+
+function createSheet_ExpenseSheets(ss) {
+  let sheet = ss.getSheetByName('Листы расхода');
+  if (!sheet) sheet = ss.insertSheet('Листы расхода');
+  
+  const headers = ['ID', 'Сотрудник_ID', 'Сотрудник', 'Пациент', 'Дата рождения пациента', 'Дата', 'Месяц', 'Категория выезда', 'Название терапии', 'Стоимость терапии', 'Позиции (JSON)', 'Итого по препаратам', 'Архив', 'Дата создания'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  formatHeader(sheet, headers.length);
+  
+  sheet.setColumnWidth(4, 250);
+  sheet.setColumnWidth(11, 400);
+  sheet.getRange('J2:J10000').setNumberFormat('#,##0.00');
+  sheet.getRange('L2:L10000').setNumberFormat('#,##0.00');
+  
+  const categoryRule = SpreadsheetApp.newDataValidation().requireValueInList(['Первичный', 'Повторный', 'Мед.отвод', 'Неустойка', 'Курс']).build();
+  sheet.getRange('H2:H10000').setDataValidation(categoryRule);
 }
 
 function createSheet_InitialStock(ss) {

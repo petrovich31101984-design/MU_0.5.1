@@ -52,6 +52,7 @@ function useData() {
   const [nomenclature, setNomenclature] = useState<gs.Nomenclature[]>([]);
   const [arrivals, setArrivals] = useState<gs.Arrival[]>([]);
   const [expenses, setExpenses] = useState<gs.Expense[]>([]);
+  const [expenseSheets, setExpenseSheets] = useState<gs.ExpenseSheet[]>([]);
   const [returns, setReturns] = useState<gs.ReturnOperation[]>([]);
   const [chatMessages, setChatMessages] = useState<gs.ChatMessage[]>([]);
   const [auditLog, setAuditLog] = useState<gs.AuditEntry[]>([]);
@@ -62,12 +63,12 @@ function useData() {
     setLoading(true);
     setError(null);
     try {
-      const [emps, noms, arrs, exps, rets, msgs, logs] = await Promise.all([
+      const [emps, noms, arrs, exps, expSheets, rets, msgs, logs] = await Promise.all([
         gs.getEmployees(), gs.getNomenclature(), gs.getArrivals(),
-        gs.getExpenses(), gs.getReturns(), gs.getChatMessages(), gs.getAuditLog(),
+        gs.getExpenses(), gs.getExpenseSheets(), gs.getReturns(), gs.getChatMessages(), gs.getAuditLog(),
       ]);
       setEmployees(emps); setNomenclature(noms); setArrivals(arrs);
-      setExpenses(exps); setReturns(rets); setChatMessages(msgs); setAuditLog(logs);
+      setExpenses(exps); setExpenseSheets(expSheets); setReturns(rets); setChatMessages(msgs); setAuditLog(logs);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки');
     } finally { setLoading(false); }
@@ -77,7 +78,7 @@ function useData() {
 
   return {
     employees, setEmployees, nomenclature, setNomenclature,
-    arrivals, setArrivals, expenses, setExpenses,
+    arrivals, setArrivals, expenses, setExpenses, expenseSheets, setExpenseSheets,
     returns, setReturns, chatMessages, setChatMessages,
     auditLog, setAuditLog, loading, error, refresh,
   };
@@ -1850,16 +1851,588 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
 }
 
 // ============ РАСХОД У СОТРУДНИКА ============
+// ============ МОДАЛЬНОЕ ОКНО СОЗДАНИЯ/РЕДАКТИРОВАНИЯ ЛИСТА РАСХОДА ============
+function ExpenseSheetModal({
+  employees,
+  nomenclature,
+  initialData,
+  onClose,
+  onSave
+}: {
+  employees: gs.Employee[];
+  nomenclature: gs.Nomenclature[];
+  initialData?: gs.ExpenseSheet;
+  onClose: () => void;
+  onSave: (sheet: gs.ExpenseSheet) => void;
+}) {
+  const [form, setForm] = useState({
+    employeeId: initialData?.employeeId || employees[0]?.id || '',
+    patientName: initialData?.patientName || '',
+    patientBirthDate: initialData?.patientBirthDate || '',
+    date: initialData?.date || new Date().toISOString().split('T')[0],
+    callCategory: initialData?.callCategory || 'Первичный',
+    therapyName: initialData?.therapyName || '',
+    therapyCost: initialData?.therapyCost || 0,
+    items: initialData?.items || [] as gs.ExpenseItem[]
+  });
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const filteredNomenclature = nomenclature.filter(n => {
+    const matchesCategory = selectedCategory === 'all' || n.category === selectedCategory;
+    const matchesSearch = searchQuery === '' || n.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const addItem = (item: gs.Nomenclature) => {
+    const existingItem = form.items.find(i => i.nomenclatureId === item.id);
+    if (existingItem) {
+      setForm({
+        ...form,
+        items: form.items.map(i =>
+          i.nomenclatureId === item.id
+            ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.pricePerUnit }
+            : i
+        )
+      });
+    } else {
+      setForm({
+        ...form,
+        items: [...form.items, {
+          nomenclatureId: item.id,
+          name: item.name,
+          category: item.category,
+          quantity: 1,
+          pricePerUnit: item.currentPrice,
+          total: item.currentPrice
+        }]
+      });
+    }
+  };
+
+  const updateQuantity = (nomenclatureId: string, quantity: number) => {
+    if (quantity <= 0) {
+      setForm({
+        ...form,
+        items: form.items.filter(i => i.nomenclatureId !== nomenclatureId)
+      });
+    } else {
+      setForm({
+        ...form,
+        items: form.items.map(i =>
+          i.nomenclatureId === nomenclatureId
+            ? { ...i, quantity, total: quantity * i.pricePerUnit }
+            : i
+        )
+      });
+    }
+  };
+
+  const totalAmount = form.items.reduce((sum, item) => sum + item.total, 0);
+  const ratio = form.therapyCost > 0 ? (totalAmount / form.therapyCost) * 100 : 0;
+
+  const handleSubmit = () => {
+    if (!form.patientName.trim()) {
+      alert('Укажите ФИО пациента');
+      return;
+    }
+    if (form.items.length === 0) {
+      alert('Добавьте хотя бы одну позицию');
+      return;
+    }
+
+    const sheet: gs.ExpenseSheet = {
+      id: initialData?.id || `EXP-${Date.now()}`,
+      employeeId: form.employeeId,
+      employeeName: employees.find(e => e.id === form.employeeId)?.fullName || '',
+      patientName: form.patientName,
+      patientBirthDate: form.patientBirthDate,
+      date: form.date,
+      month: form.date.substring(0, 7),
+      callCategory: form.callCategory,
+      therapyName: form.therapyName,
+      therapyCost: form.therapyCost,
+      items: form.items,
+      totalAmount: totalAmount,
+      archived: initialData?.archived || false
+    };
+
+    onSave(sheet);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-800">
+            {initialData ? '✍️ Редактировать лист расхода' : '📋 Создать лист расхода'}
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Шапка листа */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Дата создания</label>
+              <input
+                type="date"
+                value={form.date}
+                onChange={e => setForm({ ...form, date: e.target.value })}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Сотрудник</label>
+              <select
+                value={form.employeeId}
+                onChange={e => setForm({ ...form, employeeId: e.target.value })}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
+              >
+                {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.fullName}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Пациент (ФИО) *</label>
+              <input
+                type="text"
+                value={form.patientName}
+                onChange={e => setForm({ ...form, patientName: e.target.value })}
+                placeholder="Введите ФИО пациента"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Дата рождения пациента</label>
+              <input
+                type="date"
+                value={form.patientBirthDate}
+                onChange={e => setForm({ ...form, patientBirthDate: e.target.value })}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Категория выезда</label>
+              <select
+                value={form.callCategory}
+                onChange={e => setForm({ ...form, callCategory: e.target.value })}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
+              >
+                <option>Первичный</option>
+                <option>Повторный</option>
+                <option>Мед.отвод</option>
+                <option>Неустойка</option>
+                <option>Курс</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Название терапии</label>
+              <input
+                type="text"
+                value={form.therapyName}
+                onChange={e => setForm({ ...form, therapyName: e.target.value })}
+                placeholder="Введите название терапии"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Стоимость терапии (₽)</label>
+              <input
+                type="number"
+                value={form.therapyCost || ''}
+                onChange={e => setForm({ ...form, therapyCost: parseFloat(e.target.value) || 0 })}
+                placeholder="0"
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Итого по препаратам (₽)</label>
+              <div className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-semibold">
+                {totalAmount.toLocaleString('ru-RU')} ₽
+              </div>
+            </div>
+          </div>
+
+          {form.therapyCost > 0 && (
+            <div className={`p-4 rounded-lg border-2 ${ratio > 105 ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-300'}`}>
+              <div className="text-sm font-semibold">
+                Соотношение стоимости терапии к итогу по препаратам: <span className={ratio > 105 ? 'text-red-700' : 'text-emerald-700'}>{ratio.toFixed(2)}%</span>
+              </div>
+              {ratio > 105 && <div className="text-xs text-red-600 mt-1">⚠️ Превышение лимита 5%</div>}
+            </div>
+          )}
+
+          {/* Выбор категории */}
+          <div>
+            <label className="text-sm text-slate-600 mb-2 block">Выберите категорию</label>
+            <div className="flex gap-2">
+              <button onClick={() => setSelectedCategory('all')} className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedCategory === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Все</button>
+              <button onClick={() => setSelectedCategory('ЛС ПКУ')} className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedCategory === 'ЛС ПКУ' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>💉 ЛС ПКУ</button>
+              <button onClick={() => setSelectedCategory('ЛС')} className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedCategory === 'ЛС' ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>💊 ЛС</button>
+              <button onClick={() => setSelectedCategory('Расходный материал')} className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedCategory === 'Расходный материал' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>🩹 Расходники</button>
+              <button onClick={() => setSelectedCategory('Оборудование')} className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedCategory === 'Оборудование' ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>🧰 Оборудование</button>
+            </div>
+          </div>
+
+          {/* Поиск и список номенклатуры */}
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <h4 className="text-sm font-semibold text-slate-700 mb-3">Доступные позиции</h4>
+            <input
+              type="text"
+              placeholder="Поиск по наименованию..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-2 mb-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+              {filteredNomenclature.map(item => (
+                <button key={item.id} onClick={() => addItem(item)} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-slate-800">{item.name}</div>
+                    <div className="text-xs text-slate-500">{item.currentPrice.toLocaleString('ru-RU')} ₽ / {item.unit}</div>
+                  </div>
+                  <span className="text-blue-600 text-lg">+</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Выбранные позиции */}
+          {form.items.length > 0 && (
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+              <div className="p-4 bg-slate-50 border-b border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-700">Выбранные позиции</h4>
+              </div>
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col style={{ width: '50%' }} />
+                  <col style={{ width: '120px' }} />
+                  <col style={{ width: '150px' }} />
+                  <col style={{ width: '150px' }} />
+                </colgroup>
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase">Наименование</th>
+                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-600 uppercase">Кол-во</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Цена за ед.</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Сумма</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {form.items.map(item => (
+                    <tr key={item.nomenclatureId} className="border-b border-slate-100">
+                      <td className="px-4 py-3 text-sm text-slate-800 truncate">{item.name}</td>
+                      <td className="px-4 py-3 text-center">
+                        <input type="number" value={item.quantity} onChange={e => updateQuantity(item.nomenclatureId, parseInt(e.target.value) || 0)} min="0" className="w-full px-2 py-1 text-center border border-slate-300 rounded text-slate-800 focus:outline-none focus:border-blue-500" />
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm text-slate-700">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600">{item.total.toLocaleString('ru-RU')} ₽</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-slate-50 font-bold">
+                    <td colSpan={3} className="px-4 py-3 text-right text-sm text-slate-800">ИТОГО:</td>
+                    <td className="px-4 py-3 text-right text-lg text-emerald-600">{totalAmount.toLocaleString('ru-RU')} ₽</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
+          <button onClick={handleSubmit} disabled={form.items.length === 0 || !form.patientName} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium">💾 Сохранить</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ МОДАЛЬНОЕ ОКНО ПРОСМОТРА ЛИСТА РАСХОДА ============
+function ViewExpenseSheetModal({
+  sheet,
+  employees,
+  nomenclature,
+  onClose
+}: {
+  sheet: gs.ExpenseSheet;
+  employees: gs.Employee[];
+  nomenclature: gs.Nomenclature[];
+  onClose: () => void;
+}) {
+  const emp = employees.find(e => e.id === sheet.employeeId);
+  const ratio = sheet.therapyCost > 0 ? (sheet.totalAmount / sheet.therapyCost) * 100 : 0;
+
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-800">📋 Лист расхода</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Шапка */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Дата создания</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                {new Date(sheet.date).toLocaleDateString('ru-RU')}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Сотрудник</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                {emp?.fullName.split(' ').map(n => n[0]).join('.') || sheet.employeeName}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Пациент</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                {sheet.patientName}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Дата рождения пациента</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                {sheet.patientBirthDate ? new Date(sheet.patientBirthDate).toLocaleDateString('ru-RU') : '-'}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Категория выезда</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                {sheet.callCategory}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Название терапии</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                {sheet.therapyName || '-'}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Стоимость терапии</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-semibold">
+                {sheet.therapyCost.toLocaleString('ru-RU')} ₽
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Итого по препаратам</label>
+              <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-semibold">
+                {sheet.totalAmount.toLocaleString('ru-RU')} ₽
+              </div>
+            </div>
+          </div>
+
+          {sheet.therapyCost > 0 && (
+            <div className={`p-4 rounded-lg border-2 ${ratio > 105 ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-300'}`}>
+              <div className="text-sm font-semibold">
+                Соотношение: <span className={ratio > 105 ? 'text-red-700' : 'text-emerald-700'}>{ratio.toFixed(2)}%</span>
+              </div>
+              {ratio > 105 && <div className="text-xs text-red-600 mt-1">⚠️ Превышение лимита 5%</div>}
+            </div>
+          )}
+
+          {/* Позиции */}
+          {sheet.items.length > 0 && (
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+              <div className="p-4 bg-slate-50 border-b border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-700">Позиции расхода</h4>
+              </div>
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col style={{ width: '50%' }} />
+                  <col style={{ width: '120px' }} />
+                  <col style={{ width: '150px' }} />
+                  <col style={{ width: '150px' }} />
+                </colgroup>
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase">Наименование</th>
+                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-600 uppercase">Кол-во</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Цена за ед.</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Сумма</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sheet.items.map(item => (
+                    <tr key={item.nomenclatureId} className="border-b border-slate-100">
+                      <td className="px-4 py-3 text-sm text-slate-800 truncate">{item.name}</td>
+                      <td className="px-4 py-3 text-center text-sm text-slate-800">{item.quantity}</td>
+                      <td className="px-4 py-3 text-right text-sm text-slate-700">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600">{item.total.toLocaleString('ru-RU')} ₽</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-slate-50 font-bold">
+                    <td colSpan={3} className="px-4 py-3 text-right text-sm text-slate-800">ИТОГО:</td>
+                    <td className="px-4 py-3 text-right text-lg text-emerald-600">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-slate-200 flex justify-end">
+          <button onClick={onClose} className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg text-white font-medium">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, nomenclature, expenses } = data;
+  const { employees, nomenclature, expenseSheets, setExpenseSheets } = data;
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
+  const [editingSheet, setEditingSheet] = useState<gs.ExpenseSheet | null>(null);
+  const [viewingSheet, setViewingSheet] = useState<gs.ExpenseSheet | null>(null);
+
+  // Фильтрация по месяцу
+  const filteredSheets = expenseSheets.filter(s => s.month === selectedMonth && !s.archived);
+
+  // Расчёт статистики
+  const totalExpense = filteredSheets.reduce((sum, s) => sum + s.totalAmount, 0);
+  const sheetsCount = filteredSheets.length;
+  const exceededLimit = filteredSheets.filter(s => {
+    if (s.therapyCost === 0) return false;
+    const ratio = (s.totalAmount / s.therapyCost) * 100;
+    return ratio > 105; // Превышение более 5%
+  }).length;
+
+  // Генерация списка месяцев
+  const generateMonthOptions = () => {
+    const months = [];
+    const current = new Date();
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(current.getFullYear(), current.getMonth() - i, 1);
+      const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthName = date.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+      months.push({ value: monthStr, label: monthName });
+    }
+    return months;
+  };
+
+  // Создание нового листа расхода
+  const handleCreateSheet = async (sheetData: gs.ExpenseSheet) => {
+    setShowCreateSheet(false);
+    setExpenseSheets([...expenseSheets, sheetData]);
+    gs.addExpenseSheet(sheetData).catch(err => {
+      console.error('Ошибка создания листа расхода:', err);
+      alert('Ошибка при создании листа расхода. Попробуйте ещё раз.');
+    });
+  };
+
+  // Редактирование листа расхода
+  const handleEditSheet = async (sheetData: gs.ExpenseSheet) => {
+    if (!editingSheet) return;
+    setEditingSheet(null);
+    setExpenseSheets(expenseSheets.map(s => s.id === sheetData.id ? sheetData : s));
+    gs.updateExpenseSheet(sheetData.id, sheetData).catch(err => {
+      console.error('Ошибка обновления листа расхода:', err);
+      alert('Ошибка при обновлении листа расхода. Попробуйте ещё раз.');
+    });
+  };
+
+  // Архивирование листа расхода
+  const handleArchiveSheet = async (id: string) => {
+    if (!confirm('Архивировать этот лист расхода?')) return;
+    setExpenseSheets(expenseSheets.map(s => s.id === id ? { ...s, archived: true } : s));
+    gs.archiveExpenseSheet(id).catch(err => {
+      console.error('Ошибка архивирования:', err);
+      alert('Ошибка при архивировании. Попробуйте ещё раз.');
+    });
+  };
+
+  // Экспорт в Excel
+  const handleExportToExcel = (sheet: gs.ExpenseSheet) => {
+    const emp = employees.find(e => e.id === sheet.employeeId);
+    const employeeInitials = emp?.fullName.split(' ').map(n => n[0]).join('.') || '';
+    const patientInitials = sheet.patientName.split(' ').map(n => n[0]).join('.') || '';
+    
+    let csv = 'Лист расхода\n\n';
+    csv += `Дата создания:,${new Date(sheet.date).toLocaleDateString('ru-RU')}\n`;
+    csv += `Сотрудник:,${employeeInitials}\n`;
+    csv += `Пациент:,${patientInitials}\n`;
+    csv += `Дата рождения пациента:,${new Date(sheet.patientBirthDate).toLocaleDateString('ru-RU')}\n`;
+    csv += `Категория выезда:,${sheet.callCategory}\n`;
+    csv += `Название терапии:,${sheet.therapyName}\n`;
+    csv += `Стоимость терапии:,${sheet.therapyCost} ₽\n\n`;
+    csv += 'Название,Тип,Кол-во,Цена за единицу (₽),Сумма (₽)\n';
+    
+    sheet.items.forEach(item => {
+      csv += `${item.name},${item.category},${item.quantity},${item.pricePerUnit},${item.total}\n`;
+    });
+    
+    csv += `\nИтого по препаратам:,${sheet.totalAmount} ₽\n`;
+    const ratio = sheet.therapyCost > 0 ? ((sheet.totalAmount / sheet.therapyCost) * 100).toFixed(2) : '0';
+    csv += `Соотношение терапии к препаратам:,${ratio}%\n`;
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Лист_расхода_${sheet.patientName}_${new Date(sheet.date).toLocaleDateString('ru-RU')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">📤 Расход у сотрудника</h2>
-        <p className="text-slate-500 text-sm mt-1">История расходов</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">📤 Расход у сотрудника</h2>
+          <p className="text-slate-500 text-sm mt-1">Листы расхода</p>
+        </div>
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+        >
+          {generateMonthOptions().map(month => (
+            <option key={month.value} value={month.value}>
+              {month.label}
+            </option>
+          ))}
+        </select>
       </div>
 
+      {/* Карточки статистики */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+          <div className="text-xs text-slate-500 uppercase mb-2">ОБЩАЯ СУММА РАСХОДА ЗА МЕСЯЦ</div>
+          <div className="text-2xl font-bold text-emerald-600">{totalExpense.toLocaleString('ru-RU')} ₽</div>
+        </div>
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+          <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ РАСХОДА ЗА МЕСЯЦ</div>
+          <div className="text-2xl font-bold text-blue-600">{sheetsCount}</div>
+        </div>
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+          <div className="text-xs text-slate-500 uppercase mb-2">ПРЕВЫШЕНИЙ ЛИМИТА 5%</div>
+          <div className="text-2xl font-bold text-red-600">{exceededLimit}</div>
+        </div>
+      </div>
+
+      {/* Кнопка создания */}
+      <div className="flex justify-end">
+        <button 
+          onClick={() => setShowCreateSheet(true)}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm"
+        >
+          + Создать лист расхода
+        </button>
+      </div>
+
+      {/* Список листов расхода */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
         <table className="w-full">
           <thead>
@@ -1867,33 +2440,102 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Дата</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Пациент</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Препарат</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Кол-во</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Категория</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Сумма (₽)</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Действия</th>
             </tr>
           </thead>
           <tbody>
-            {expenses.slice(0, 100).map(exp => {
-              const emp = employees.find(e => e.id === exp.employeeId);
-              const nom = nomenclature.find(n => n.id === exp.nomenclatureId);
+            {filteredSheets.map(sheet => {
+              const emp = employees.find(e => e.id === sheet.employeeId);
+              const ratio = sheet.therapyCost > 0 ? (sheet.totalAmount / sheet.therapyCost) * 100 : 0;
+              const isExceeded = ratio > 105;
               return (
-                <tr key={exp.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-5 py-3 text-sm text-slate-700">{exp.callDate}</td>
-                  <td className="px-5 py-3 text-sm text-slate-800">{(emp?.fullName || '').split(' ').slice(0, 2).join(' ')}</td>
-                  <td className="px-5 py-3">
-                    <div className="text-sm text-slate-800">{exp.patientName}</div>
-                    <div className="text-xs text-slate-500">ДР: {exp.patientBirthDate}</div>
+                <tr key={sheet.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-5 py-3 text-sm text-slate-700">
+                    {new Date(sheet.date).toLocaleDateString('ru-RU')}
                   </td>
-                  <td className="px-5 py-3 text-sm text-slate-700">{nom?.name}</td>
-                  <td className="px-5 py-3 text-right text-sm text-slate-800">{exp.quantity} {nom?.unit}</td>
+                  <td className="px-5 py-3 text-sm text-slate-800">
+                    {emp?.fullName.split(' ').map(n => n[0]).join('.') || sheet.employeeName}
+                  </td>
+                  <td 
+                    className="px-5 py-3 text-sm text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+                    onClick={() => setViewingSheet(sheet)}
+                  >
+                    {sheet.patientName.split(' ').map(n => n[0]).join('.') || sheet.patientName}
+                  </td>
+                  <td className="px-5 py-3">
+                    <span className="px-2 py-1 rounded-full text-xs bg-slate-100 text-slate-700">
+                      {sheet.callCategory}
+                    </span>
+                  </td>
+                  <td className={`px-5 py-3 text-right text-sm font-semibold ${isExceeded ? 'text-red-600' : 'text-emerald-600'}`}>
+                    {sheet.totalAmount.toLocaleString('ru-RU')} ₽
+                    {isExceeded && <div className="text-xs text-red-500">⚠️ {ratio.toFixed(1)}%</div>}
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <button 
+                        onClick={() => setEditingSheet(sheet)}
+                        className="text-blue-600 hover:text-blue-800 text-lg"
+                        title="Редактировать"
+                      >
+                        ✍️
+                      </button>
+                      <button 
+                        onClick={() => handleArchiveSheet(sheet.id)}
+                        className="text-orange-600 hover:text-orange-800 text-lg"
+                        title="Архивировать"
+                      >
+                        📦
+                      </button>
+                      <button 
+                        onClick={() => handleExportToExcel(sheet)}
+                        className="text-green-600 hover:text-green-800 text-lg"
+                        title="Экспорт в Excel"
+                      >
+                        📊
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        {expenses.length === 0 && (
-          <div className="p-8 text-center text-slate-500"><p>Нет записей о расходе</p></div>
+        {filteredSheets.length === 0 && (
+          <div className="p-8 text-center text-slate-500"><p>Нет листов расхода за выбранный месяц</p></div>
         )}
       </div>
+
+      {/* Модальные окна */}
+      {showCreateSheet && (
+        <ExpenseSheetModal
+          employees={employees.filter(e => e.status === 'Активен')}
+          nomenclature={nomenclature}
+          onClose={() => setShowCreateSheet(false)}
+          onSave={handleCreateSheet}
+        />
+      )}
+
+      {editingSheet && (
+        <ExpenseSheetModal
+          employees={employees.filter(e => e.status === 'Активен')}
+          nomenclature={nomenclature}
+          initialData={editingSheet}
+          onClose={() => setEditingSheet(null)}
+          onSave={handleEditSheet}
+        />
+      )}
+
+      {viewingSheet && (
+        <ViewExpenseSheetModal
+          sheet={viewingSheet}
+          employees={employees}
+          nomenclature={nomenclature}
+          onClose={() => setViewingSheet(null)}
+        />
+      )}
     </div>
   );
 }
