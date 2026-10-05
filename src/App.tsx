@@ -1676,6 +1676,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
   const [viewingArrival, setViewingArrival] = useState<gs.Arrival | null>(null);
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
   const handleAddArrival = async (form: any) => {
     setShowAddArrival(false);
@@ -1683,7 +1684,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
       id: `ARR-${Date.now()}`,
       ...form,
       date: form.date,
-      month: currentMonth,
+      month: selectedMonth,
       addedBy: 'Руководитель',
     };
     setArrivals([...arrivals, newArrival]);
@@ -1692,6 +1693,24 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
       alert('Ошибка при добавлении прихода. Попробуйте ещё раз.');
     });
   };
+
+  // Генерация списка месяцев для фильтра
+  const generateMonthOptions = () => {
+    const months = [];
+    const current = new Date();
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(current.getFullYear(), current.getMonth() - i, 1);
+      const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthName = date.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+      months.push({ value: monthStr, label: monthName });
+    }
+    return months;
+  };
+
+  // Фильтрация приходов по выбранному месяцу
+  const filteredArrivals = arrivals.filter(a => a.month === selectedMonth);
+  const totalAmount = filteredArrivals.reduce((s, a) => s + a.amount, 0);
+  const selectedMonthName = new Date(selectedMonth + '-01').toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
 
   const handleEditArrival = async (form: any) => {
     if (!editingArrival) return;
@@ -1726,11 +1745,24 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
         <p className="text-slate-500 text-sm mt-1">Управление поступлениями</p>
       </div>
 
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-slate-600">
-          ПРИХОД ЗА {new Date().toLocaleString('ru-RU', { month: 'long' }).toUpperCase()} {new Date().getFullYear()}: <span className="text-emerald-600 font-bold">
-            {arrivals.filter(a => a.month === currentMonth).reduce((s, a) => s + a.amount, 0).toLocaleString('ru-RU')} ₽
-          </span>
+      <div className="flex justify-between items-center gap-4">
+        <div className="flex items-center gap-4">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          >
+            {generateMonthOptions().map(month => (
+              <option key={month.value} value={month.value}>
+                {month.label}
+              </option>
+            ))}
+          </select>
+          <div className="text-sm text-slate-600">
+            ПРИХОД ЗА {selectedMonthName.toUpperCase()}: <span className="text-emerald-600 font-bold">
+              {totalAmount.toLocaleString('ru-RU')} ₽
+            </span>
+          </div>
         </div>
         <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Создать карту прихода</button>
       </div>
@@ -1747,7 +1779,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
             </tr>
           </thead>
           <tbody>
-            {arrivals.sort((a, b) => b.date.localeCompare(a.date)).map(arr => {
+            {filteredArrivals.sort((a, b) => b.date.localeCompare(a.date)).map(arr => {
               const emp = employees.find(e => e.id === arr.employeeId);
               return (
                 <tr key={arr.id} className="border-b border-slate-100 hover:bg-slate-50">
@@ -1793,8 +1825,8 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
             })}
           </tbody>
         </table>
-        {arrivals.length === 0 && (
-          <div className="p-8 text-center text-slate-500"><p>Нет записей о приходе</p></div>
+        {filteredArrivals.length === 0 && (
+          <div className="p-8 text-center text-slate-500"><p>Нет записей о приходе за {selectedMonthName}</p></div>
         )}
       </div>
 
