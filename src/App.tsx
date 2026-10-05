@@ -1784,13 +1784,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
               return (
                 <tr key={arr.id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-5 py-3 text-sm text-slate-700">
-                    {new Date(arr.date).toLocaleString('ru-RU', { 
-                      day: '2-digit', 
-                      month: '2-digit', 
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    {new Date(arr.date).toLocaleDateString('ru-RU')}
                   </td>
                   <td 
                     className="px-5 py-3 text-sm text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
