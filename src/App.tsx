@@ -1758,13 +1758,12 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
         </select>
       </div>
 
-      <div className="text-sm text-slate-600">
-        ПРИХОД ЗА {selectedMonthName.toUpperCase()}: <span className="text-emerald-600 font-bold">
-          {totalAmount.toLocaleString('ru-RU')} ₽
-        </span>
-      </div>
-
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-slate-600">
+          ПРИХОД ЗА {selectedMonthName.toUpperCase()}: <span className="text-emerald-600 font-bold">
+            {totalAmount.toLocaleString('ru-RU')} ₽
+          </span>
+        </div>
         <button onClick={() => setShowAddArrival(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm">+ Создать карту прихода</button>
       </div>
 
