@@ -38,6 +38,8 @@ function doGet(e) {
         return jsonResponse(getArrivalsData());
       case 'getExpenses':
         return jsonResponse(getExpensesData());
+      case 'getExpenseSheets':
+        return jsonResponse(getExpenseSheetsData());
       case 'getReturns':
         return jsonResponse(getReturnsData());
       case 'getChat':
