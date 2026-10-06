@@ -116,6 +116,9 @@ function doPost(e) {
       case 'archiveExpenseSheet':
         archiveExpenseSheetRow(data.data.id);
         return jsonResponse({ success: true });
+      case 'createTestExpenseSheets':
+        createTestExpenseSheetsRow(data.data);
+        return jsonResponse({ success: true });
       case 'setupDatabase':
         setupDatabase();
         return jsonResponse({ success: true, message: 'База данных создана' });
@@ -477,6 +480,30 @@ function archiveExpenseSheetRow(id) {
       writeAudit('Листы расхода', id, 'Архивирование', '', '');
       break;
     }
+  }
+}
+
+function createTestExpenseSheetsRow(testSheets) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
+  
+  for (const data of testSheets) {
+    sheet.appendRow([
+      data.id || '',
+      data.employeeId || '',
+      data.employeeName || '',
+      data.patientName || '',
+      data.patientBirthDate || '',
+      data.date || new Date(),
+      data.month || '',
+      data.callCategory || '',
+      data.therapyName || '',
+      data.therapyCost || 0,
+      JSON.stringify(data.items || []),
+      data.totalAmount || 0,
+      data.archived ? 'ДА' : 'НЕТ',
+      new Date()
+    ]);
+    writeAudit('Листы расхода', data.id, 'Создание (тест)', '', 'Тестовый лист расхода: ' + data.patientName);
   }
 }
 

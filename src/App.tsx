@@ -3268,12 +3268,31 @@ function AuditPage({ data }: { data: ReturnType<typeof useData> }) {
 
 // ============ НАСТРОЙКИ ============
 function SettingsPage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, nomenclature, arrivals, expenses, returns, chatMessages, auditLog } = data;
+  const { employees, nomenclature, arrivals, expenses, returns, chatMessages, auditLog, refresh } = data;
   const config = gs.getCurrentConfig();
+  const [creatingTest, setCreatingTest] = useState(false);
 
   const handleDisconnect = () => {
     if (confirm('Вы уверены? Приложение перестанет работать с Google Sheets.')) {
       gs.clearConfig(); window.location.reload();
+    }
+  };
+
+  const handleCreateTestData = async () => {
+    if (!confirm('Создать тестовые листы расхода для 3 сотрудников?\n\nБудут созданы тестовые данные за предыдущий месяц.')) {
+      return;
+    }
+    
+    setCreatingTest(true);
+    try {
+      await gs.createTestExpenseSheets();
+      await refresh();
+      alert('✅ Тестовые листы расхода успешно созданы!');
+    } catch (error) {
+      console.error('Ошибка создания тестовых данных:', error);
+      alert('❌ Ошибка при создании тестовых данных: ' + (error instanceof Error ? error.message : 'Неизвестная ошибка'));
+    } finally {
+      setCreatingTest(false);
     }
   };
 
@@ -3335,6 +3354,25 @@ function SettingsPage({ data }: { data: ReturnType<typeof useData> }) {
             <div className="text-2xl font-bold text-slate-800">{auditLog.length}</div>
             <div className="text-xs text-slate-500">Записей журнала</div>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="p-5 border-b border-slate-200 bg-slate-50">
+          <h3 className="text-lg font-bold text-slate-800">🧪 Тестовые данные</h3>
+        </div>
+        <div className="p-5">
+          <p className="text-sm text-slate-600 mb-4">
+            Создайте тестовые листы расхода для демонстрации работы системы. 
+            Будут созданы 3 тестовых листа расхода за предыдущий месяц.
+          </p>
+          <button
+            onClick={handleCreateTestData}
+            disabled={creatingTest}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white text-sm font-medium shadow-sm"
+          >
+            {creatingTest ? '⏳ Создание...' : '🧪 Создать тестовые листы расхода'}
+          </button>
         </div>
       </div>
 

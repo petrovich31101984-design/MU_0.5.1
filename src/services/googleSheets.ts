@@ -428,6 +428,72 @@ export async function archiveExpenseSheet(id: string): Promise<void> {
   await postData('archiveExpenseSheet', { id });
 }
 
+export async function createTestExpenseSheets(): Promise<void> {
+  const now = new Date();
+  const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const monthStr = `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
+  
+  const testSheets: Partial<ExpenseSheet>[] = [
+    {
+      id: `EXP-TEST-${Date.now()}-1`,
+      employeeId: 'EMP-001',
+      employeeName: 'Иванов Иван Иванович',
+      patientName: 'Петров Пётр Петрович',
+      patientBirthDate: '1980-05-15',
+      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-10`,
+      month: monthStr,
+      callCategory: 'Первичный',
+      therapyName: 'Детоксикация',
+      therapyCost: 5000,
+      items: [
+        { nomenclatureId: 'NOM-001', name: 'Налоксон', category: 'ЛС ПКУ', quantity: 2, pricePerUnit: 150, total: 300 },
+        { nomenclatureId: 'NOM-002', name: 'Физраствор', category: 'Расходный материал', quantity: 1, pricePerUnit: 50, total: 50 }
+      ],
+      totalAmount: 350,
+      archived: false
+    },
+    {
+      id: `EXP-TEST-${Date.now()}-2`,
+      employeeId: 'EMP-002',
+      employeeName: 'Сидорова Мария Ивановна',
+      patientName: 'Кузнецов Алексей Сергеевич',
+      patientBirthDate: '1975-08-22',
+      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-15`,
+      month: monthStr,
+      callCategory: 'Повторный',
+      therapyName: 'Кодирование',
+      therapyCost: 8000,
+      items: [
+        { nomenclatureId: 'NOM-003', name: 'Дисульфирам', category: 'ЛС', quantity: 1, pricePerUnit: 450, total: 450 },
+        { nomenclatureId: 'NOM-004', name: 'Шприцы', category: 'Расходный материал', quantity: 5, pricePerUnit: 20, total: 100 }
+      ],
+      totalAmount: 550,
+      archived: false
+    },
+    {
+      id: `EXP-TEST-${Date.now()}-3`,
+      employeeId: 'EMP-003',
+      employeeName: 'Козлов Дмитрий Александрович',
+      patientName: 'Смирнова Елена Владимировна',
+      patientBirthDate: '1990-12-03',
+      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-20`,
+      month: monthStr,
+      callCategory: 'Курс',
+      therapyName: 'Реабилитация',
+      therapyCost: 15000,
+      items: [
+        { nomenclatureId: 'NOM-005', name: 'Налтрексон', category: 'ЛС', quantity: 1, pricePerUnit: 1200, total: 1200 },
+        { nomenclatureId: 'NOM-006', name: 'Витамины', category: 'ЛС', quantity: 1, pricePerUnit: 300, total: 300 },
+        { nomenclatureId: 'NOM-007', name: 'Капельницы', category: 'Оборудование', quantity: 3, pricePerUnit: 150, total: 450 }
+      ],
+      totalAmount: 1950,
+      archived: false
+    }
+  ];
+
+  await postData('createTestExpenseSheets', testSheets);
+}
+
 export async function addExpense(expense: Partial<Expense>): Promise<void> {
   await postData('addExpense', expense);
 }
