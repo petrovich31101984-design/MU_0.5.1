@@ -2418,7 +2418,7 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-500 uppercase mb-2">ОБЩАЯ СУММА РАСХОДА ЗА МЕСЯЦ</div>
           <div className="text-2xl font-bold text-emerald-600">{totalExpense.toLocaleString('ru-RU')} ₽</div>
-          <div className="text-xs text-slate-500 mt-2">{new Date(previousMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
+          <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(previousMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
         </div>
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ РАСХОДА ЗА МЕСЯЦ</div>
