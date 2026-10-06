@@ -2433,16 +2433,6 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
         </div>
       </div>
 
-      {/* Кнопка создания */}
-      <div className="flex justify-end">
-        <button 
-          onClick={() => setShowCreateSheet(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium shadow-sm"
-        >
-          + Создать лист расхода
-        </button>
-      </div>
-
       {/* Список листов расхода */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
         <table className="w-full">
