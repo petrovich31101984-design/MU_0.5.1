@@ -2290,8 +2290,10 @@ function ViewExpenseSheetModal({
 function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
   const { employees, nomenclature, expenseSheets, setExpenseSheets } = data;
   const [selectedMonth, setSelectedMonth] = useState(() => {
+    // По умолчанию показываем предыдущий месяц
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
   });
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [editingSheet, setEditingSheet] = useState<gs.ExpenseSheet | null>(null);
