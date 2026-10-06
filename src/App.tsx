@@ -2309,7 +2309,7 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
 
   // Расчёт статистики
   const totalExpense = expenseSheets.filter(s => s.month === previousMonth && !s.archived).reduce((sum, s) => sum + s.totalAmount, 0);
-  const sheetsCount = filteredSheets.length;
+  const sheetsCount = expenseSheets.filter(s => s.month === previousMonth && !s.archived).length;
   const exceededLimit = filteredSheets.filter(s => {
     if (s.therapyCost === 0) return false;
     const ratio = (s.totalAmount / s.therapyCost) * 100;
@@ -2423,6 +2423,7 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ РАСХОДА ЗА МЕСЯЦ</div>
           <div className="text-2xl font-bold text-blue-600">{sheetsCount}</div>
+          <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(previousMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
         </div>
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-500 uppercase mb-2">ПРЕВЫШЕНИЙ ЛИМИТА 5%</div>
