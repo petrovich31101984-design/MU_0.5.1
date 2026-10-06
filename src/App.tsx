@@ -2298,6 +2298,24 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [editingSheet, setEditingSheet] = useState<gs.ExpenseSheet | null>(null);
   const [viewingSheet, setViewingSheet] = useState<gs.ExpenseSheet | null>(null);
+  const [notifications, setNotifications] = useState<Array<{id: string; message: string; date: string; type: string}>>([]);
+
+  // Функция создания уведомления
+  const createNotification = (sheet: gs.ExpenseSheet) => {
+    if (sheet.therapyCost === 0) return;
+    
+    const ratio = (sheet.totalAmount / sheet.therapyCost) * 100;
+    if (ratio > 105) {
+      const emp = employees.find(e => e.id === sheet.employeeId);
+      const notification = {
+        id: `NOTIF-${Date.now()}`,
+        message: `Превышение лимита 5% в листе расхода для пациента ${sheet.patientName}. Соотношение: ${ratio.toFixed(2)}%. Сотрудник: ${emp?.fullName || 'Неизвестно'}`,
+        date: new Date().toISOString(),
+        type: 'warning'
+      };
+      setNotifications(prev => [notification, ...prev]);
+    }
+  };
 
   // Фильтрация по месяцу
   const filteredSheets = expenseSheets.filter(s => s.month === selectedMonth && !s.archived);
@@ -2328,6 +2346,10 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
   const handleCreateSheet = async (sheetData: gs.ExpenseSheet) => {
     setShowCreateSheet(false);
     setExpenseSheets([...expenseSheets, sheetData]);
+    
+    // Проверка превышения лимита и создание уведомления
+    createNotification(sheetData);
+    
     gs.addExpenseSheet(sheetData).catch(err => {
       console.error('Ошибка создания листа расхода:', err);
       alert('Ошибка при создании листа расхода. Попробуйте ещё раз.');
@@ -2339,6 +2361,10 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
     if (!editingSheet) return;
     setEditingSheet(null);
     setExpenseSheets(expenseSheets.map(s => s.id === sheetData.id ? sheetData : s));
+    
+    // Проверка превышения лимита и создание уведомления
+    createNotification(sheetData);
+    
     gs.updateExpenseSheet(sheetData.id, sheetData).catch(err => {
       console.error('Ошибка обновления листа расхода:', err);
       alert('Ошибка при обновлении листа расхода. Попробуйте ещё раз.');
@@ -2390,6 +2416,41 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
 
   return (
     <div className="space-y-6">
+      {/* Уведомления о превышении лимита */}
+      {notifications.length > 0 && (
+        <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold text-red-700">⚠️ Уведомления о превышении лимита</h3>
+            <button 
+              onClick={() => setNotifications([])}
+              className="text-red-600 hover:text-red-800 text-sm font-medium"
+            >
+              Очистить все
+            </button>
+          </div>
+          <div className="space-y-2">
+            {notifications.map(notif => (
+              <div key={notif.id} className="bg-white border border-red-200 rounded p-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm text-slate-800">{notif.message}</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {new Date(notif.date).toLocaleString('ru-RU')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}
+                    className="text-red-500 hover:text-red-700 ml-2"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-start">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">📤 Расход у сотрудника</h2>
@@ -2437,6 +2498,7 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Пациент</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Категория</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Сумма (₽)</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Соотношение</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Действия</th>
             </tr>
           </thead>
@@ -2466,7 +2528,17 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
                   </td>
                   <td className={`px-5 py-3 text-right text-sm font-semibold ${isExceeded ? 'text-red-600' : 'text-emerald-600'}`}>
                     {sheet.totalAmount.toLocaleString('ru-RU')} ₽
-                    {isExceeded && <div className="text-xs text-red-500">⚠️ {ratio.toFixed(1)}%</div>}
+                  </td>
+                  <td className="px-5 py-3 text-center">
+                    {sheet.therapyCost > 0 ? (
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        isExceeded ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {ratio.toFixed(1)}%
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-400">-</span>
+                    )}
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-center gap-2">
