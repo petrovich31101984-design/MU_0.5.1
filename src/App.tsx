@@ -2300,8 +2300,15 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
   // Фильтрация по месяцу
   const filteredSheets = expenseSheets.filter(s => s.month === selectedMonth && !s.archived);
 
+  // Вычисление предыдущего месяца
+  const previousMonth = (() => {
+    const date = new Date(selectedMonth + '-01');
+    date.setMonth(date.getMonth() - 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  })();
+
   // Расчёт статистики
-  const totalExpense = filteredSheets.reduce((sum, s) => sum + s.totalAmount, 0);
+  const totalExpense = expenseSheets.filter(s => s.month === previousMonth && !s.archived).reduce((sum, s) => sum + s.totalAmount, 0);
   const sheetsCount = filteredSheets.length;
   const exceededLimit = filteredSheets.filter(s => {
     if (s.therapyCost === 0) return false;
@@ -2411,7 +2418,7 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-500 uppercase mb-2">ОБЩАЯ СУММА РАСХОДА ЗА МЕСЯЦ</div>
           <div className="text-2xl font-bold text-emerald-600">{totalExpense.toLocaleString('ru-RU')} ₽</div>
-          <div className="text-xs text-slate-500 mt-2">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
+          <div className="text-xs text-slate-500 mt-2">{new Date(previousMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
         </div>
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ РАСХОДА ЗА МЕСЯЦ</div>
