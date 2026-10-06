@@ -484,7 +484,18 @@ function archiveExpenseSheetRow(id) {
 }
 
 function createTestExpenseSheetsRow(testSheets) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
+  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
+  
+  // Если лист не существует, создаём его
+  if (!sheet) {
+    Logger.log('Лист "Листы расхода" не найден, создаём...');
+    createSheet_ExpenseSheets(SpreadsheetApp.getActiveSpreadsheet());
+    sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
+    
+    if (!sheet) {
+      throw new Error('Не удалось создать лист "Листы расхода"');
+    }
+  }
   
   for (const data of testSheets) {
     sheet.appendRow([
