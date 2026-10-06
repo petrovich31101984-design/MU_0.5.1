@@ -1929,9 +1929,9 @@ function ExpenseSheetModal({
   };
 
   const totalAmount = form.items.reduce((sum, item) => sum + item.total, 0);
-  const ratio = form.therapyCost > 0 ? (totalAmount / form.therapyCost) * 100 : 0;
-  const excess = ratio - 100; // Превышение в процентах
-  const isExceeded = excess > 5;
+  const limit = form.therapyCost > 0 ? (totalAmount * 100) / form.therapyCost : 0;
+  const isExceeded = limit > 5;
+  const isLow = limit < 2.5;
 
   const handleSubmit = () => {
     if (!form.patientName.trim()) {
@@ -2058,11 +2058,12 @@ function ExpenseSheetModal({
           </div>
 
           {form.therapyCost > 0 && (
-            <div className={`p-4 rounded-lg border-2 ${isExceeded ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-300'}`}>
+            <div className={`p-4 rounded-lg border-2 ${isExceeded ? 'bg-red-50 border-red-300' : isLow ? 'bg-slate-50 border-slate-300' : 'bg-emerald-50 border-emerald-300'}`}>
               <div className="text-sm font-semibold">
-                Превышение стоимости препаратов над терапией: <span className={isExceeded ? 'text-red-700' : 'text-emerald-700'}>{excess.toFixed(2)}%</span>
+                Лимит: <span className={isExceeded ? 'text-red-700' : isLow ? 'text-slate-600' : 'text-emerald-700'}>{limit.toFixed(2)}%</span>
               </div>
               {isExceeded && <div className="text-xs text-red-600 mt-1">⚠️ Превышение лимита 5%</div>}
+              {isLow && <div className="text-xs text-slate-600 mt-1">ℹ️ Лимит ниже 2.5%</div>}
             </div>
           )}
 
@@ -2167,9 +2168,9 @@ function ViewExpenseSheetModal({
   onClose: () => void;
 }) {
   const emp = employees.find(e => e.id === sheet.employeeId);
-  const ratio = sheet.therapyCost > 0 ? (sheet.totalAmount / sheet.therapyCost) * 100 : 0;
-  const excess = ratio - 100; // Превышение в процентах
-  const isExceeded = excess > 5;
+  const limit = sheet.therapyCost > 0 ? (sheet.totalAmount * 100) / sheet.therapyCost : 0;
+  const isExceeded = limit > 5;
+  const isLow = limit < 2.5;
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
@@ -2233,11 +2234,12 @@ function ViewExpenseSheetModal({
           </div>
 
           {sheet.therapyCost > 0 && (
-            <div className={`p-4 rounded-lg border-2 ${isExceeded ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-300'}`}>
+            <div className={`p-4 rounded-lg border-2 ${isExceeded ? 'bg-red-50 border-red-300' : isLow ? 'bg-slate-50 border-slate-300' : 'bg-emerald-50 border-emerald-300'}`}>
               <div className="text-sm font-semibold">
-                Превышение: <span className={isExceeded ? 'text-red-700' : 'text-emerald-700'}>{excess.toFixed(2)}%</span>
+                Лимит: <span className={isExceeded ? 'text-red-700' : isLow ? 'text-slate-600' : 'text-emerald-700'}>{limit.toFixed(2)}%</span>
               </div>
               {isExceeded && <div className="text-xs text-red-600 mt-1">⚠️ Превышение лимита 5%</div>}
+              {isLow && <div className="text-xs text-slate-600 mt-1">ℹ️ Лимит ниже 2.5%</div>}
             </div>
           )}
 
@@ -2308,16 +2310,20 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
   const createNotification = (sheet: gs.ExpenseSheet) => {
     if (sheet.therapyCost === 0) return;
     
-    const ratio = (sheet.totalAmount / sheet.therapyCost) * 100;
-    const excess = ratio - 100; // Превышение в процентах
+    const limit = (sheet.totalAmount * 100) / sheet.therapyCost;
     
-    if (excess > 5) {
+    if (limit > 5 || limit < 2.5) {
       const emp = employees.find(e => e.id === sheet.employeeId);
+      const type = limit > 5 ? 'warning' : 'info';
+      const message = limit > 5 
+        ? `Превышение лимита в листе расхода для пациента ${sheet.patientName}. Лимит: ${limit.toFixed(2)}% (> 5%). Сотрудник: ${emp?.fullName || 'Неизвестно'}`
+        : `Низкий лимит в листе расхода для пациента ${sheet.patientName}. Лимит: ${limit.toFixed(2)}% (< 2.5%). Сотрудник: ${emp?.fullName || 'Неизвестно'}`;
+      
       const notification = {
-        id: `NOTIF-${Date.now()}`,
-        message: `Превышение лимита в листе расхода для пациента ${sheet.patientName}. Превышение: ${excess.toFixed(2)}%. Сотрудник: ${emp?.fullName || 'Неизвестно'}`,
+        id: `NOTIF-${Date.now()}-${Math.random()}`,
+        message,
         date: new Date().toISOString(),
-        type: 'warning'
+        type
       };
       setNotifications(prev => [notification, ...prev]);
     }
@@ -2331,9 +2337,8 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
   const sheetsCount = filteredSheets.length;
   const exceededLimit = filteredSheets.filter(s => {
     if (s.therapyCost === 0) return false;
-    const ratio = (s.totalAmount / s.therapyCost) * 100;
-    const excess = ratio - 100; // Превышение в процентах
-    return excess > 5; // Превышение более 5%
+    const limit = (s.totalAmount * 100) / s.therapyCost;
+    return limit > 5 || limit < 2.5; // Лимит вне диапазона 2.5% - 5%
   }).length;
 
   // Генерация списка месяцев
@@ -2409,9 +2414,8 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
     });
     
     csv += `\nИтого по препаратам:,${sheet.totalAmount} ₽\n`;
-    const ratio = sheet.therapyCost > 0 ? (sheet.totalAmount / sheet.therapyCost) * 100 : 0;
-    const excess = ratio - 100;
-    csv += `Превышение:,${excess.toFixed(2)}%\n`;
+    const limit = sheet.therapyCost > 0 ? (sheet.totalAmount * 100) / sheet.therapyCost : 0;
+    csv += `Лимит:,${limit.toFixed(2)}%\n`;
 
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -2424,21 +2428,23 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
 
   return (
     <div className="space-y-6">
-      {/* Уведомления о превышении лимита */}
+      {/* Уведомления о лимите */}
       {notifications.length > 0 && (
-        <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+        <div className={`${notifications.some(n => n.type === 'warning') ? 'bg-red-50 border-red-300' : 'bg-blue-50 border-blue-300'} border-2 rounded-lg p-4`}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-bold text-red-700">⚠️ Уведомления о превышении лимита</h3>
+            <h3 className={`text-lg font-bold ${notifications.some(n => n.type === 'warning') ? 'text-red-700' : 'text-blue-700'}`}>
+              {notifications.some(n => n.type === 'warning') ? '⚠️ Уведомления о превышении лимита' : 'ℹ️ Уведомления о лимите'}
+            </h3>
             <button 
               onClick={() => setNotifications([])}
-              className="text-red-600 hover:text-red-800 text-sm font-medium"
+              className={`${notifications.some(n => n.type === 'warning') ? 'text-red-600 hover:text-red-800' : 'text-blue-600 hover:text-blue-800'} text-sm font-medium`}
             >
               Очистить все
             </button>
           </div>
           <div className="space-y-2">
             {notifications.map(notif => (
-              <div key={notif.id} className="bg-white border border-red-200 rounded p-3">
+              <div key={notif.id} className={`bg-white border ${notif.type === 'warning' ? 'border-red-200' : 'border-blue-200'} rounded p-3`}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="text-sm text-slate-800">{notif.message}</p>
@@ -2448,7 +2454,7 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
                   </div>
                   <button
                     onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}
-                    className="text-red-500 hover:text-red-700 ml-2"
+                    className={`${notif.type === 'warning' ? 'text-red-500 hover:text-red-700' : 'text-blue-500 hover:text-blue-700'} ml-2`}
                   >
                     ×
                   </button>
@@ -2490,7 +2496,7 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
           <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
         </div>
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-          <div className="text-xs text-slate-500 uppercase mb-2">ПРЕВЫШЕНИЙ ЛИМИТА 5%</div>
+          <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ С ОТКЛОНЕНИЕМ ОТ ЛИМИТА</div>
           <div className="text-2xl font-bold text-red-600">{exceededLimit}</div>
           <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
         </div>
@@ -2513,9 +2519,9 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
           <tbody>
             {filteredSheets.map(sheet => {
               const emp = employees.find(e => e.id === sheet.employeeId);
-              const ratio = sheet.therapyCost > 0 ? (sheet.totalAmount / sheet.therapyCost) * 100 : 0;
-              const excess = ratio - 100; // Превышение в процентах
-              const isExceeded = excess > 5;
+              const limit = sheet.therapyCost > 0 ? (sheet.totalAmount * 100) / sheet.therapyCost : 0;
+              const isExceeded = limit > 5;
+              const isLow = limit < 2.5;
               return (
                 <tr key={sheet.id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-5 py-3 text-sm text-slate-700">
@@ -2535,15 +2541,15 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
                       {sheet.callCategory}
                     </span>
                   </td>
-                  <td className={`px-5 py-3 text-right text-sm font-semibold ${isExceeded ? 'text-red-600' : 'text-emerald-600'}`}>
+                  <td className={`px-5 py-3 text-right text-sm font-semibold ${isExceeded ? 'text-red-600' : isLow ? 'text-slate-500' : 'text-emerald-600'}`}>
                     {sheet.totalAmount.toLocaleString('ru-RU')} ₽
                   </td>
                   <td className="px-5 py-3 text-center">
                     {sheet.therapyCost > 0 ? (
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        isExceeded ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                        isExceeded ? 'bg-red-100 text-red-700' : isLow ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-700'
                       }`}>
-                        {excess.toFixed(1)}%
+                        {limit.toFixed(1)}%
                       </span>
                     ) : (
                       <span className="text-xs text-slate-400">-</span>
