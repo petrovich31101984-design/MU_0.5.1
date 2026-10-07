@@ -1917,25 +1917,25 @@ function ExpenseSheetView({
         <h2 className="text-xl font-bold text-slate-800">Лист расхода</h2>
         <div className="flex gap-2">
           <button 
-            onClick={handleExportToExcel}
-            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
-            title="Экспорт в Excel"
+            onClick={() => onEdit(sheet)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors min-w-[120px]"
+            title="Редактировать"
           >
-            📊 Excel
+            ✍️ Редактировать
           </button>
           <button 
             onClick={() => onArchive(sheet.id)}
-            className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded transition-colors"
+            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded transition-colors min-w-[120px]"
             title="Отправить в архив"
           >
-            📦
+            📦 В архив
           </button>
           <button 
-            onClick={() => onEdit(sheet)}
-            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
-            title="Редактировать"
+            onClick={handleExportToExcel}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors min-w-[120px]"
+            title="Импорт в Excel"
           >
-            ✍️
+            📊 Импорт в Excel
           </button>
         </div>
       </div>
