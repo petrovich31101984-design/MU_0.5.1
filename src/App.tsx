@@ -1991,6 +1991,27 @@ function ExpenseSheetView({
 
       {/* Тело - белый цвет */}
       <div className="bg-white p-6">
+        {/* Использование лимита */}
+        {sheet.therapyCost > 0 && (
+          <div className="mb-6">
+            <div className="flex justify-between items-end mb-1">
+              <span className={`text-2xl font-bold ${isExceeded ? 'text-red-600' : isLow ? 'text-slate-500' : 'text-emerald-600'}`}>
+                {limit.toFixed(2)}%
+              </span>
+              <span className="text-sm font-semibold text-slate-700">Использование лимита</span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all ${
+                  isExceeded ? 'bg-red-500' : isLow ? 'bg-slate-400' : 'bg-emerald-500'
+                }`}
+                style={{ width: `${Math.min(limit, 100)}%` }}
+              ></div>
+            </div>
+            {isExceeded && <div className="text-xs text-red-600 mt-1">⚠️ Превышение лимита 5%</div>}
+            {isLow && <div className="text-xs text-slate-500 mt-1">ℹ️ Лимит ниже 2.5%</div>}
+          </div>
+        )}
       </div>
     </div>
   );
