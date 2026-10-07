@@ -1925,7 +1925,7 @@ function ExpenseSheetView({
           </button>
           <button 
             onClick={() => onArchive(sheet.id)}
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded transition-colors min-w-[120px]"
+            className="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white text-sm rounded transition-colors min-w-[120px]"
             title="Отправить в архив"
           >
             📦 В архив
