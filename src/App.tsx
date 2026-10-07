@@ -2389,6 +2389,7 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
     const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     return `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
   });
+  const [showArchiveList, setShowArchiveList] = useState(false);
 
   // Фильтрация по месяцу (только архивированные)
   const archivedSheets = expenseSheets.filter(s => s.month === selectedMonth && s.archived);
@@ -2427,7 +2428,6 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
       <div className="flex justify-between items-start">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">🗄️ Архив</h2>
-          <p className="text-slate-500 text-sm mt-1">Архивированные листы расхода</p>
         </div>
         <select
           value={selectedMonth}
@@ -2444,33 +2444,52 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
 
       {/* Карточки статистики */}
       <div className="grid grid-cols-1 gap-4">
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between min-h-[140px]">
-          <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ В АРХИВЕ</div>
-          <div className="text-2xl font-bold text-slate-600 min-h-[40px] flex items-center">{sheetsCount}</div>
-          <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
+        <div 
+          onClick={() => setShowArchiveList(true)}
+          className="bg-white rounded-lg p-2 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-500 hover:shadow-md transition-all"
+          style={{ width: 'fit-content', minWidth: '120px' }}
+        >
+          <div className="text-xs text-slate-500 uppercase mb-1">ЛИСТОВ В АРХИВЕ</div>
+          <div className="text-lg font-bold text-slate-600">{sheetsCount}</div>
+          <div className="text-xs text-slate-500 mt-1 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
         </div>
       </div>
 
-      {/* Архивированные листы расхода */}
-      <div className="space-y-6">
-        {archivedSheets.length === 0 ? (
-          <div className="bg-white rounded-xl p-8 text-center text-slate-500 border border-slate-200">
-            <p>Нет архивированных листов расхода за выбранный месяц</p>
+      {/* Модальное окно со списком архивированных листов */}
+      {showArchiveList && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-slate-100 px-6 py-4 flex justify-between items-center border-b border-slate-300">
+              <h2 className="text-xl font-bold text-slate-800">🗄️ Архивированные листы расхода</h2>
+              <button 
+                onClick={() => setShowArchiveList(false)}
+                className="text-slate-500 hover:text-slate-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              {archivedSheets.length === 0 ? (
+                <div className="bg-white rounded-xl p-8 text-center text-slate-500 border border-slate-200">
+                  <p>Нет архивированных листов расхода за выбранный месяц</p>
+                </div>
+              ) : (
+                archivedSheets.map(sheet => (
+                  <ExpenseSheetView
+                    key={sheet.id}
+                    sheet={sheet}
+                    employees={employees}
+                    onArchive={() => {}}
+                    onEdit={() => {}}
+                    onRestore={handleRestoreSheet}
+                    isArchived={true}
+                  />
+                ))
+              )}
+            </div>
           </div>
-        ) : (
-          archivedSheets.map(sheet => (
-            <ExpenseSheetView
-              key={sheet.id}
-              sheet={sheet}
-              employees={employees}
-              onArchive={() => {}}
-              onEdit={() => {}}
-              onRestore={handleRestoreSheet}
-              isArchived={true}
-            />
-          ))
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
