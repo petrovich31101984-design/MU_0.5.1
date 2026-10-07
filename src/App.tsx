@@ -2717,8 +2717,15 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
 function BalancePage() {
   return (
     <div className="space-y-6">
-      <div>
+      {/* Шапка */}
+      <div className="bg-slate-100 px-6 py-4 border-b border-slate-300">
         <h2 className="text-2xl font-bold text-slate-800">🧰 Остаток у сотрудника</h2>
+        <p className="text-slate-600 mt-1">Просмотр остатков номенклатуры у сотрудников</p>
+      </div>
+
+      {/* Тело */}
+      <div className="bg-white p-6">
+        {/* Здесь будет содержимое раздела */}
       </div>
     </div>
   );
