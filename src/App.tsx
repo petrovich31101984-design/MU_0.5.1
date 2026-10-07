@@ -1878,103 +1878,87 @@ function ExpenseSheetView({
   const patientInitials = sheet.patientName.split(' ').map(n => n[0]).join('.');
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+    <div className="bg-white border-2 border-slate-300 rounded-lg p-8 shadow-sm">
       {/* Заголовок */}
-      <h2 className="text-2xl font-bold text-center text-slate-800 mb-6">Лист расхода</h2>
+      <h2 className="text-2xl font-bold text-center text-slate-800 mb-6 pb-4 border-b-2 border-slate-300">Лист расхода</h2>
 
-      {/* Шапка - основная информация */}
-      <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-4">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <span className="text-slate-600">Дата создания:</span> <span className="font-semibold text-slate-800">{formatDateShort(sheet.date)}</span>
-          </div>
-          <div>
-            <span className="text-slate-600">Сотрудник:</span> <span className="font-semibold text-slate-800">{employeeInitials}</span>
-          </div>
-          <div>
-            <span className="text-slate-600">Пациент:</span> <span className="font-semibold text-slate-800">{patientInitials}</span>
-          </div>
-          <div>
-            <span className="text-slate-600">Дата рождения:</span> <span className="font-semibold text-slate-800">{sheet.patientBirthDate ? formatDateShort(sheet.patientBirthDate) : '-'}</span>
-          </div>
+      {/* Основная информация */}
+      <div className="mb-4 text-sm space-y-2">
+        <div className="flex flex-wrap gap-4">
+          <div><span className="text-slate-600">Дата создания:</span> <span className="font-semibold">{formatDateShort(sheet.date)}</span></div>
+          <div><span className="text-slate-600">Сотрудник:</span> <span className="font-semibold">{employeeInitials}</span></div>
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <div><span className="text-slate-600">Пациент:</span> <span className="font-semibold">{patientInitials}</span></div>
+          <div><span className="text-slate-600">Дата рождения:</span> <span className="font-semibold">{sheet.patientBirthDate ? formatDateShort(sheet.patientBirthDate) : '-'}</span></div>
         </div>
       </div>
 
       {/* Категория и терапия */}
-      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mb-4">
-        <div className="space-y-2 text-sm">
-          <div>
-            <span className="text-slate-600">Категория выезда:</span> <span className="font-semibold text-slate-800">{sheet.callCategory}</span>
-          </div>
-          <div>
-            <span className="text-slate-600">Название терапии:</span> <span className="font-semibold text-slate-800">{sheet.therapyName || '-'}</span>
-          </div>
-        </div>
+      <div className="mb-4 text-sm space-y-2">
+        <div><span className="text-slate-600">Категория выезда:</span> <span className="font-semibold">{sheet.callCategory}</span></div>
+        <div><span className="text-slate-600">Название терапии:</span> <span className="font-semibold">{sheet.therapyName || '-'}</span></div>
       </div>
 
-      {/* Стоимость терапии и лимит */}
-      <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200 mb-4">
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-slate-600">Стоимость терапии:</span>
-            <span className="font-semibold text-slate-800">
-              {sheet.therapyCost.toLocaleString('ru-RU')} ₽ 
-              {sheet.therapyCost > 0 && <span className="text-slate-500 ml-2">(лимит 5%: {limitAmount.toLocaleString('ru-RU')} ₽)</span>}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-600">Итого по препаратам:</span>
-            <span className="font-semibold text-slate-800">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</span>
-          </div>
+      {/* Стоимость терапии */}
+      <div className="mb-4 text-sm space-y-2">
+        <div className="flex justify-between">
+          <span className="text-slate-600">Стоимость терапии:</span>
+          <span className="font-semibold">
+            {sheet.therapyCost.toLocaleString('ru-RU')} ₽
+            {sheet.therapyCost > 0 && <span className="text-slate-500 ml-2">(лимит 5%: {limitAmount.toLocaleString('ru-RU')} ₽)</span>}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-slate-600">Итого по препаратам:</span>
+          <span className="font-semibold">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</span>
         </div>
       </div>
 
       {/* Использование лимита */}
       {sheet.therapyCost > 0 && (
-        <div className={`p-4 rounded-lg border-2 mb-4 ${isExceeded ? 'bg-red-50 border-red-300' : isLow ? 'bg-slate-50 border-slate-300' : 'bg-emerald-50 border-emerald-300'}`}>
-          <h4 className="text-sm font-semibold text-slate-700 mb-2">Использование лимита</h4>
+        <div className="mb-6 p-3 border border-slate-300 rounded">
+          <div className="text-sm font-semibold mb-1">Использование лимита</div>
           <div className="text-sm">
             <span className="text-slate-600">Лимит: </span>
-            <span className={`font-bold ${isExceeded ? 'text-red-700' : isLow ? 'text-slate-600' : 'text-emerald-700'}`}>
+            <span className={`font-bold ${isExceeded ? 'text-red-600' : isLow ? 'text-slate-500' : 'text-emerald-600'}`}>
               {limit.toFixed(2)}%
             </span>
           </div>
           {isExceeded && <div className="text-xs text-red-600 mt-1">⚠️ Превышение лимита 5%</div>}
-          {isLow && <div className="text-xs text-slate-600 mt-1">ℹ️ Лимит ниже 2.5%</div>}
+          {isLow && <div className="text-xs text-slate-500 mt-1">ℹ️ Лимит ниже 2.5%</div>}
         </div>
       )}
 
       {/* Препараты и материалы */}
       {sheet.items.length > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-          <div className="p-4 bg-slate-50 border-b border-slate-200">
-            <h4 className="text-sm font-semibold text-slate-700">Препараты и материалы</h4>
-          </div>
-          <table className="w-full">
+        <div>
+          <h3 className="text-lg font-bold text-slate-800 mb-3 pb-2 border-b border-slate-300">Препараты и материалы</h3>
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase">Название</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase">Тип</th>
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-600 uppercase">Кол-во</th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Цена за единицу (₽)</th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-slate-600 uppercase">Сумма (₽)</th>
+              <tr className="border-b-2 border-slate-400">
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Название</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Тип</th>
+                <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700">Кол-во</th>
+                <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Цена за единицу (₽)</th>
+                <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Сумма (₽)</th>
               </tr>
             </thead>
             <tbody>
               {sheet.items.map(item => (
-                <tr key={item.nomenclatureId} className="border-b border-slate-100">
-                  <td className="px-4 py-3 text-sm text-slate-800">{item.name}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{item.category}</td>
-                  <td className="px-4 py-3 text-center text-sm text-slate-800">{item.quantity}</td>
-                  <td className="px-4 py-3 text-right text-sm text-slate-700">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600">{item.total.toLocaleString('ru-RU')} ₽</td>
+                <tr key={item.nomenclatureId} className="border-b border-slate-200">
+                  <td className="px-3 py-2 text-sm text-slate-800">{item.name}</td>
+                  <td className="px-3 py-2 text-sm text-slate-700">{item.category}</td>
+                  <td className="px-3 py-2 text-center text-sm text-slate-800">{item.quantity}</td>
+                  <td className="px-3 py-2 text-right text-sm text-slate-700">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
+                  <td className="px-3 py-2 text-right text-sm font-semibold text-slate-800">{item.total.toLocaleString('ru-RU')} ₽</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="bg-slate-50 font-bold border-t-2 border-slate-300">
-                <td colSpan={4} className="px-4 py-3 text-right text-sm text-slate-800">ИТОГО</td>
-                <td className="px-4 py-3 text-right text-lg text-emerald-600">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</td>
+              <tr className="border-t-2 border-slate-400 font-bold">
+                <td colSpan={4} className="px-3 py-3 text-right text-sm text-slate-800">ИТОГО</td>
+                <td className="px-3 py-3 text-right text-base text-slate-800">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</td>
               </tr>
             </tfoot>
           </table>
