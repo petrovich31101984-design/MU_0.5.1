@@ -2739,11 +2739,17 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
                 <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Ед. изм.</th>
                 <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Количество</th>
                 <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Цена за единицу</th>
-                {activeEmployees.map(emp => (
-                  <th key={emp.id} className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">
-                    {emp.fullName.split(' ').map(n => n[0]).join('.')}
-                  </th>
-                ))}
+                {activeEmployees.map(emp => {
+                  const parts = emp.fullName.trim().split(' ');
+                  const lastName = parts[0] || '';
+                  const initials = parts.slice(1).map(p => p[0] + '.').join('');
+                  const formattedName = initials ? `${lastName} ${initials}` : lastName;
+                  return (
+                    <th key={emp.id} className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">
+                      {formattedName}
+                    </th>
+                  );
+                })}
                 <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300 bg-slate-200">Итого</th>
               </tr>
             </thead>
