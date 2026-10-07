@@ -2039,23 +2039,36 @@ function ExpenseSheetView({
               <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Сумма</th>
             </tr>
           </thead>
-          <tbody>
-            {sheet.items.length > 0 ? (
-              sheet.items.map(item => (
-                <tr key={item.nomenclatureId} className="border-b border-slate-200">
-                  <td className="px-3 py-2 text-sm text-slate-800">{item.name}</td>
-                  <td className="px-3 py-2 text-sm text-slate-700">{item.category}</td>
-                  <td className="px-3 py-2 text-center text-sm text-slate-800">{item.quantity}</td>
-                  <td className="px-3 py-2 text-right text-sm text-slate-700">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
-                  <td className="px-3 py-2 text-right text-sm font-semibold text-slate-800">{item.total.toLocaleString('ru-RU')} ₽</td>
+        </table>
+        <div className="overflow-y-auto" style={{ maxHeight: '400px' }}>
+          <table className="w-full border-collapse">
+            <tbody>
+              {sheet.items.length > 0 ? (
+                [...sheet.items]
+                  .sort((a, b) => {
+                    // ЛС ПКУ всегда первые
+                    if (a.category === 'ЛС ПКУ' && b.category !== 'ЛС ПКУ') return -1;
+                    if (a.category !== 'ЛС ПКУ' && b.category === 'ЛС ПКУ') return 1;
+                    return 0;
+                  })
+                  .map(item => (
+                    <tr key={item.nomenclatureId} className="border-b border-slate-200">
+                      <td className="px-3 py-2 text-sm text-slate-800">{item.name}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700">{item.category}</td>
+                      <td className="px-3 py-2 text-center text-sm text-slate-800">{item.quantity}</td>
+                      <td className="px-3 py-2 text-right text-sm text-slate-700">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
+                      <td className="px-3 py-2 text-right text-sm font-semibold text-slate-800">{item.total.toLocaleString('ru-RU')} ₽</td>
+                    </tr>
+                  ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-3 py-4 text-center text-sm text-slate-400">Нет данных</td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="px-3 py-4 text-center text-sm text-slate-400">Нет данных</td>
-              </tr>
-            )}
-          </tbody>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <table className="w-full border-collapse">
           <tfoot>
             <tr className="border-t border-slate-300">
               <td className="px-3 py-2 text-left text-sm font-semibold text-slate-800">ИТОГО</td>
