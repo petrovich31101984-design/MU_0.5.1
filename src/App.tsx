@@ -2734,23 +2734,23 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-100">
-                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Номенклатура</th>
-                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Тип</th>
-                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Ед. изм.</th>
-                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Количество</th>
-                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Цена за единицу</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300 sticky left-0 bg-slate-100 z-10" style={{ minWidth: '200px' }}>Номенклатура</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300 sticky left-[200px] bg-slate-100 z-10" style={{ minWidth: '120px' }}>Тип</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300 sticky left-[320px] bg-slate-100 z-10" style={{ minWidth: '100px' }}>Ед. изм.</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300 sticky left-[420px] bg-slate-100 z-10" style={{ minWidth: '100px' }}>Количество</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300 sticky left-[520px] bg-slate-100 z-10" style={{ minWidth: '120px' }}>Цена за единицу</th>
                 {activeEmployees.map(emp => {
                   const parts = emp.fullName.trim().split(' ');
                   const lastName = parts[0] || '';
                   const initials = parts.slice(1).map(p => p[0] + '.').join('');
                   const formattedName = initials ? `${lastName} ${initials}` : lastName;
                   return (
-                    <th key={emp.id} className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">
+                    <th key={emp.id} className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300" style={{ minWidth: '120px' }}>
                       {formattedName}
                     </th>
                   );
                 })}
-                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300 bg-slate-200">Итого</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300 bg-slate-200 sticky right-0 z-10" style={{ minWidth: '120px' }}>Итого</th>
               </tr>
             </thead>
             <tbody>
@@ -2763,17 +2763,17 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
               ) : (
                 nomenclature.map(item => (
                   <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300">{item.name}</td>
-                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300">{item.category}</td>
-                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300">{item.unit}</td>
-                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300">0</td>
-                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300">{item.currentPrice.toLocaleString('ru-RU')} ₽</td>
+                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-0 bg-white z-10">{item.name}</td>
+                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[200px] bg-white z-10">{item.category}</td>
+                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[320px] bg-white z-10">{item.unit}</td>
+                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[420px] bg-white z-10">0</td>
+                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[520px] bg-white z-10">{item.currentPrice.toLocaleString('ru-RU')} ₽</td>
                     {activeEmployees.map(emp => (
                       <td key={emp.id} className="px-3 py-2 text-sm text-slate-700 border border-slate-300">
                         -
                       </td>
                     ))}
-                    <td className="px-3 py-2 text-sm font-semibold text-slate-800 border border-slate-300 bg-slate-50">
+                    <td className="px-3 py-2 text-sm font-semibold text-slate-800 border border-slate-300 bg-slate-50 sticky right-0 z-10">
                       0 ₽
                     </td>
                   </tr>
