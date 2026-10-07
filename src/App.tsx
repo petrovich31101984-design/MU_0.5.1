@@ -1970,7 +1970,9 @@ function ExpenseSheetView({
               <span className="text-slate-600">Название терапии:</span>{' '}
               <span className="font-semibold">{sheet.therapyName || '-'}</span>
             </div>
-            <div className="ml-4">
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <div>
               <span className="text-slate-600">Стоимость терапии:</span>{' '}
               <span className="font-semibold">
                 {sheet.therapyCost.toLocaleString('ru-RU')} ₽
