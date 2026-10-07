@@ -2375,13 +2375,16 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
     return `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  // Фильтрация по месяцу
+  // Фильтрация по месяцу (для отображения)
   const filteredSheets = expenseSheets.filter(s => s.month === selectedMonth && !s.archived);
 
-  // Расчёт статистики за выбранный месяц
-  const totalExpense = filteredSheets.reduce((sum, s) => sum + s.totalAmount, 0);
-  const sheetsCount = filteredSheets.length;
-  const exceededLimit = filteredSheets.filter(s => {
+  // Все листы за месяц (включая архивированные) для расчёта статистики
+  const allSheetsForMonth = expenseSheets.filter(s => s.month === selectedMonth);
+
+  // Расчёт статистики за выбранный месяц (включая архивированные)
+  const totalExpense = allSheetsForMonth.reduce((sum, s) => sum + s.totalAmount, 0);
+  const sheetsCount = allSheetsForMonth.length;
+  const exceededLimit = allSheetsForMonth.filter(s => {
     if (s.therapyCost === 0) return false;
     const limit = (s.totalAmount * 100) / s.therapyCost;
     return limit > 5 || limit < 2.5; // Лимит вне диапазона 2.5% - 5%
@@ -2406,7 +2409,6 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
     setExpenseSheets(expenseSheets.map(s => s.id === id ? { ...s, archived: true } : s));
     try {
       await gs.archiveExpenseSheet(id);
-      await data.refresh();
     } catch (err) {
       console.error('Ошибка архивирования:', err);
       alert('Ошибка при архивировании. Попробуйте ещё раз.');
