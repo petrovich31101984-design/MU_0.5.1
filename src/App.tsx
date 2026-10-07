@@ -1907,19 +1907,19 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
 
       {/* Карточки статистики */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between min-h-[140px]">
           <div className="text-xs text-slate-500 uppercase mb-2">ОБЩАЯ СУММА РАСХОДА ЗА МЕСЯЦ</div>
-          <div className="text-2xl font-bold text-emerald-600">{totalExpense.toLocaleString('ru-RU')} ₽</div>
+          <div className="text-2xl font-bold text-emerald-600 min-h-[40px] flex items-center">{totalExpense.toLocaleString('ru-RU')} ₽</div>
           <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between min-h-[140px]">
           <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ РАСХОДА ЗА МЕСЯЦ</div>
-          <div className="text-2xl font-bold text-blue-600">{sheetsCount}</div>
+          <div className="text-2xl font-bold text-blue-600 min-h-[40px] flex items-center">{sheetsCount}</div>
           <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between min-h-[140px]">
           <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ С ОТКЛОНЕНИЕМ ОТ ЛИМИТА</div>
-          <div className="text-2xl font-bold text-red-600">{exceededLimit}</div>
+          <div className="text-2xl font-bold text-red-600 min-h-[40px] flex items-center">{exceededLimit}</div>
           <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
         </div>
       </div>
