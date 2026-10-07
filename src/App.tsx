@@ -1961,7 +1961,7 @@ function ExpenseSheetView({
               <span className="font-semibold">{sheet.patientBirthDate ? formatDateShort(sheet.patientBirthDate) : '-'}</span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+          <div className="flex flex-wrap gap-x-2 gap-y-2">
             <div>
               <span className="text-slate-600">Категория выезда:</span>{' '}
               <span className="font-semibold">{sheet.callCategory}</span>
@@ -1970,7 +1970,7 @@ function ExpenseSheetView({
               <span className="text-slate-600">Название терапии:</span>{' '}
               <span className="font-semibold">{sheet.therapyName || '-'}</span>
             </div>
-            <div>
+            <div className="ml-4">
               <span className="text-slate-600">Стоимость терапии:</span>{' '}
               <span className="font-semibold">
                 {sheet.therapyCost.toLocaleString('ru-RU')} ₽
