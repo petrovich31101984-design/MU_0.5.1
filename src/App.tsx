@@ -2019,7 +2019,7 @@ function ExpenseSheetView({
         </div>
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b-2 border-slate-400">
+            <tr className="bg-slate-100">
               <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Название</th>
               <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Тип</th>
               <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700">Количество</th>
