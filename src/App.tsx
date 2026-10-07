@@ -2404,10 +2404,13 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
   const handleArchiveSheet = async (id: string) => {
     if (!confirm('Отправить лист расхода в архив?')) return;
     setExpenseSheets(expenseSheets.map(s => s.id === id ? { ...s, archived: true } : s));
-    gs.archiveExpenseSheet(id).catch(err => {
+    try {
+      await gs.archiveExpenseSheet(id);
+      await data.refresh();
+    } catch (err) {
       console.error('Ошибка архивирования:', err);
       alert('Ошибка при архивировании. Попробуйте ещё раз.');
-    });
+    }
   };
 
   // Редактирование листа расхода
