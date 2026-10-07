@@ -84,7 +84,7 @@ function useData() {
   };
 }
 
-type Page = 'dashboard' | 'employees' | 'nomenclature' | 'arrival' | 'expense' | 'balance' | 'chat' | 'reports' | 'audit' | 'settings';
+type Page = 'dashboard' | 'employees' | 'nomenclature' | 'arrival' | 'expense' | 'balance' | 'archive' | 'chat' | 'reports' | 'audit' | 'settings';
 
 // ============ СТРАНИЦА НАСТРОЙКИ ============
 function SetupPage() {
@@ -239,6 +239,7 @@ export default function App() {
     { id: 'arrival', label: 'Приход к сотруднику', icon: '📥' },
     { id: 'expense', label: 'Расход у сотрудника', icon: '📤' },
     { id: 'balance', label: 'Остаток у сотрудника', icon: '🧰' },
+    { id: 'archive', label: 'Архив', icon: '🗄️' },
     { id: 'chat', label: 'Сообщения', icon: '💬' },
     { id: 'reports', label: 'Отчёты', icon: '📈' },
     { id: 'audit', label: 'Журнал', icon: '📝' },
@@ -253,6 +254,7 @@ export default function App() {
       case 'arrival': return <ArrivalPage data={data} />;
       case 'expense': return <ExpensePage data={data} />;
       case 'balance': return <BalancePage data={data} />;
+      case 'archive': return <ArchivePage data={data} />;
       case 'chat': return <ChatPage data={data} />;
       case 'reports': return <ReportsPage data={data} />;
       case 'audit': return <AuditPage data={data} />;
@@ -2365,6 +2367,113 @@ function ExpenseSheetView({
 }
 
 // ============ РАСХОД У СОТРУДНИКА ============
+// ============ АРХИВ ============
+function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
+  const { employees, expenseSheets, setExpenseSheets } = data;
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  // Фильтрация по месяцу (только архивированные)
+  const archivedSheets = expenseSheets.filter(s => s.month === selectedMonth && s.archived);
+
+  // Расчёт статистики
+  const totalExpense = archivedSheets.reduce((sum, s) => sum + s.totalAmount, 0);
+  const sheetsCount = archivedSheets.length;
+
+  // Генерация списка месяцев
+  const generateMonthOptions = () => {
+    const months = [];
+    const current = new Date();
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(current.getFullYear(), current.getMonth() - i, 1);
+      const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthName = date.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+      months.push({ value: monthStr, label: monthName });
+    }
+    return months;
+  };
+
+  // Восстановление из архива
+  const handleRestoreSheet = async (id: string) => {
+    if (!confirm('Восстановить лист расхода из архива?')) return;
+    setExpenseSheets(expenseSheets.map(s => s.id === id ? { ...s, archived: false } : s));
+    try {
+      await gs.restoreExpenseSheet(id);
+    } catch (err) {
+      console.error('Ошибка восстановления:', err);
+      alert('Ошибка при восстановлении. Попробуйте ещё раз.');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">🗄️ Архив</h2>
+          <p className="text-slate-500 text-sm mt-1">Архивированные листы расхода</p>
+        </div>
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+        >
+          {generateMonthOptions().map(month => (
+            <option key={month.value} value={month.value}>
+              {month.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Карточки статистики */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between min-h-[140px]">
+          <div className="text-xs text-slate-500 uppercase mb-2">ОБЩАЯ СУММА В АРХИВЕ</div>
+          <div className="text-2xl font-bold text-slate-600 min-h-[40px] flex items-center">{totalExpense.toLocaleString('ru-RU')} ₽</div>
+          <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
+        </div>
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between min-h-[140px]">
+          <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ В АРХИВЕ</div>
+          <div className="text-2xl font-bold text-slate-600 min-h-[40px] flex items-center">{sheetsCount}</div>
+          <div className="text-xs text-slate-500 mt-2 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
+        </div>
+      </div>
+
+      {/* Архивированные листы расхода */}
+      <div className="space-y-6">
+        {archivedSheets.length === 0 ? (
+          <div className="bg-white rounded-xl p-8 text-center text-slate-500 border border-slate-200">
+            <p>Нет архивированных листов расхода за выбранный месяц</p>
+          </div>
+        ) : (
+          archivedSheets.map(sheet => (
+            <div key={sheet.id} className="relative">
+              <div className="absolute top-4 right-4 z-10">
+                <button
+                  onClick={() => handleRestoreSheet(sheet.id)}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded transition-colors"
+                  title="Восстановить из архива"
+                >
+                  ♻️ Восстановить
+                </button>
+              </div>
+              <ExpenseSheetView
+                sheet={sheet}
+                employees={employees}
+                onArchive={() => {}}
+                onEdit={() => {}}
+              />
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
   const { employees, expenseSheets, setExpenseSheets, nomenclature } = data;
   const [editingSheet, setEditingSheet] = useState<gs.ExpenseSheet | null>(null);

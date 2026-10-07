@@ -116,6 +116,9 @@ function doPost(e) {
       case 'archiveExpenseSheet':
         archiveExpenseSheetRow(data.data.id);
         return jsonResponse({ success: true });
+      case 'restoreExpenseSheet':
+        restoreExpenseSheetRow(data.data.id);
+        return jsonResponse({ success: true });
       case 'createTestExpenseSheets':
         createTestExpenseSheetsRow(data.data);
         return jsonResponse({ success: true });
@@ -478,6 +481,19 @@ function archiveExpenseSheetRow(id) {
     if (String(allData[i][0]) === String(id)) {
       sheet.getRange(i + 1, 13).setValue('ДА');
       writeAudit('Листы расхода', id, 'Архивирование', '', '');
+      break;
+    }
+  }
+}
+
+function restoreExpenseSheetRow(id) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
+  const allData = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      sheet.getRange(i + 1, 13).setValue('НЕТ');
+      writeAudit('Листы расхода', id, 'Восстановление из архива', '', '');
       break;
     }
   }

@@ -428,6 +428,10 @@ export async function archiveExpenseSheet(id: string): Promise<void> {
   await postData('archiveExpenseSheet', { id });
 }
 
+export async function restoreExpenseSheet(id: string): Promise<void> {
+  await postData('restoreExpenseSheet', { id });
+}
+
 export async function createTestExpenseSheets(): Promise<void> {
   const now = new Date();
   const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
