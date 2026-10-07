@@ -1913,30 +1913,73 @@ function ExpenseSheetView({
   return (
     <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
       {/* Шапка - светло-серый цвет */}
-      <div className="bg-slate-100 px-6 py-4 flex justify-between items-center border-b border-slate-300">
-        <h2 className="text-xl font-bold text-slate-800">Лист расхода</h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => onEdit(sheet)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors min-w-[120px]"
-            title="Редактировать"
-          >
-            ✍️ Редактировать
-          </button>
-          <button 
-            onClick={() => onArchive(sheet.id)}
-            className="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white text-sm rounded transition-colors min-w-[120px]"
-            title="Отправить в архив"
-          >
-            📦 В архив
-          </button>
-          <button 
-            onClick={handleExportToExcel}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors min-w-[120px]"
-            title="Импорт в Excel"
-          >
-            📊 Импорт в Excel
-          </button>
+      <div className="bg-slate-100 px-6 py-4 border-b border-slate-300">
+        <div className="flex justify-between items-start mb-4">
+          <h2 className="text-xl font-bold text-slate-800">Лист расхода</h2>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => onEdit(sheet)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors min-w-[120px]"
+              title="Редактировать"
+            >
+              ✍️ Редактировать
+            </button>
+            <button 
+              onClick={() => onArchive(sheet.id)}
+              className="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white text-sm rounded transition-colors min-w-[120px]"
+              title="Отправить в архив"
+            >
+              📦 В архив
+            </button>
+            <button 
+              onClick={handleExportToExcel}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors min-w-[120px]"
+              title="Импорт в Excel"
+            >
+              📊 Импорт в Excel
+            </button>
+          </div>
+        </div>
+        
+        {/* Информация в шапке */}
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+          <div>
+            <span className="text-slate-600">Дата составления:</span>{' '}
+            <span className="font-semibold">{formatDateShort(sheet.date)}</span>
+          </div>
+          <div>
+            <span className="text-slate-600">Сотрудник:</span>{' '}
+            <span className="font-semibold">{emp?.fullName || sheet.employeeName}</span>
+          </div>
+          <div>
+            <span className="text-slate-600">Пациент:</span>{' '}
+            <span className="font-semibold">{sheet.patientName}</span>
+          </div>
+          <div>
+            <span className="text-slate-600">Дата рождения:</span>{' '}
+            <span className="font-semibold">{sheet.patientBirthDate ? formatDateShort(sheet.patientBirthDate) : '-'}</span>
+          </div>
+          <div>
+            <span className="text-slate-600">Категория выезда:</span>{' '}
+            <span className="font-semibold">{sheet.callCategory}</span>
+          </div>
+          <div>
+            <span className="text-slate-600">Название терапии:</span>{' '}
+            <span className="font-semibold">{sheet.therapyName || '-'}</span>
+          </div>
+          <div>
+            <span className="text-slate-600">Стоимость терапии:</span>{' '}
+            <span className="font-semibold">
+              {sheet.therapyCost.toLocaleString('ru-RU')} ₽
+              {sheet.therapyCost > 0 && (
+                <span className="text-slate-500 ml-2">(лимит: {limitAmount.toLocaleString('ru-RU')} ₽)</span>
+              )}
+            </span>
+          </div>
+          <div>
+            <span className="text-slate-600">Итого по препаратам:</span>{' '}
+            <span className="font-semibold">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</span>
+          </div>
         </div>
       </div>
 
