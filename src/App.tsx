@@ -2761,23 +2761,40 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
                   </td>
                 </tr>
               ) : (
-                nomenclature.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-0 bg-white z-10">{item.name}</td>
-                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[200px] bg-white z-10">{item.category}</td>
-                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[320px] bg-white z-10">{item.unit}</td>
-                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[420px] bg-white z-10">0</td>
-                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[520px] bg-white z-10">{item.currentPrice.toLocaleString('ru-RU')} ₽</td>
+                <>
+                  {nomenclature.map(item => (
+                    <tr key={item.id} className="hover:bg-slate-50">
+                      <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-0 bg-white z-10">{item.name}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[200px] bg-white z-10">{item.category}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[320px] bg-white z-10">{item.unit}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[420px] bg-white z-10">0</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[520px] bg-white z-10">{item.currentPrice.toLocaleString('ru-RU')} ₽</td>
+                      {activeEmployees.map(emp => (
+                        <td key={emp.id} className="px-3 py-2 text-sm text-slate-700 border border-slate-300">
+                          -
+                        </td>
+                      ))}
+                      <td className="px-3 py-2 text-sm font-semibold text-slate-800 border border-slate-300 bg-slate-50 sticky right-0 z-10">
+                        0 ₽
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="bg-slate-100 font-bold">
+                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-0 bg-slate-100 z-10">ИТОГО по сотрудникам</td>
+                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-[200px] bg-slate-100 z-10"></td>
+                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-[320px] bg-slate-100 z-10"></td>
+                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-[420px] bg-slate-100 z-10"></td>
+                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-[520px] bg-slate-100 z-10"></td>
                     {activeEmployees.map(emp => (
-                      <td key={emp.id} className="px-3 py-2 text-sm text-slate-700 border border-slate-300">
-                        -
+                      <td key={emp.id} className="px-3 py-2 text-sm text-slate-800 border border-slate-300">
+                        0 ₽
                       </td>
                     ))}
-                    <td className="px-3 py-2 text-sm font-semibold text-slate-800 border border-slate-300 bg-slate-50 sticky right-0 z-10">
+                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 bg-slate-100 sticky right-0 z-10">
                       0 ₽
                     </td>
                   </tr>
-                ))
+                </>
               )}
             </tbody>
           </table>
