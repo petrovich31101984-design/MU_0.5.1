@@ -239,10 +239,10 @@ export default function App() {
     { id: 'arrival', label: 'Приход к сотруднику', icon: '📥' },
     { id: 'expense', label: 'Расход у сотрудника', icon: '📤' },
     { id: 'balance', label: 'Остаток у сотрудника', icon: '🧰' },
-    { id: 'archive', label: 'Архив', icon: '🗄️' },
     { id: 'chat', label: 'Сообщения', icon: '💬' },
     { id: 'reports', label: 'Отчёты', icon: '📈' },
     { id: 'audit', label: 'Журнал', icon: '📝' },
+    { id: 'archive', label: 'Архив', icon: '🗄️' },
     { id: 'settings', label: 'Настройки', icon: '⚙️' },
   ];
 
