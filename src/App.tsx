@@ -1860,7 +1860,7 @@ function ExpenseSheetView({
 }) {
   const emp = employees.find(e => e.id === sheet.employeeId);
   const limit = sheet.therapyCost > 0 ? (sheet.totalAmount * 100) / sheet.therapyCost : 0;
-  const limitAmount = sheet.therapyCost * 0.06; // 6% от стоимости терапии
+  const limitAmount = sheet.therapyCost * 0.05; // 5% от стоимости терапии
   const isExceeded = limit > 5;
   const isLow = limit < 2.5;
 
@@ -1919,7 +1919,7 @@ function ExpenseSheetView({
             <span className="text-slate-600">Стоимость терапии:</span>
             <span className="font-semibold text-slate-800">
               {sheet.therapyCost.toLocaleString('ru-RU')} ₽ 
-              {sheet.therapyCost > 0 && <span className="text-slate-500 ml-2">(лимит 6%: {limitAmount.toLocaleString('ru-RU')} ₽)</span>}
+              {sheet.therapyCost > 0 && <span className="text-slate-500 ml-2">(лимит 5%: {limitAmount.toLocaleString('ru-RU')} ₽)</span>}
             </span>
           </div>
           <div className="flex justify-between">
