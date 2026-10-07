@@ -2046,7 +2046,7 @@ function ExpenseSheetView({
           </tbody>
           <tfoot>
             <tr className="border-t border-slate-300">
-              <td className="px-3 py-2 text-left text-sm font-semibold text-slate-800">Итого</td>
+              <td className="px-3 py-2 text-left text-sm font-semibold text-slate-800">ИТОГО</td>
               <td colSpan={3}></td>
               <td className="px-3 py-2 text-right text-sm font-semibold text-blue-600">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</td>
             </tr>
