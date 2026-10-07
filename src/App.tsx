@@ -1876,8 +1876,20 @@ function ExpenseSheetView({
     return `${day}.${month}.${year}`;
   };
 
-  const employeeInitials = emp?.fullName.split(' ').map(n => n[0]).join('.') || sheet.employeeName;
-  const patientInitials = sheet.patientName.split(' ').map(n => n[0]).join('.');
+  // Функция для форматирования ФИО в "Фамилия И.О."
+  const formatFullName = (fullName: string) => {
+    if (!fullName) return '';
+    const parts = fullName.trim().split(' ');
+    if (parts.length === 0) return '';
+    if (parts.length === 1) return parts[0];
+    
+    const lastName = parts[0]; // Фамилия полностью
+    const initials = parts.slice(1).map(part => part[0] + '.').join(''); // И.О.
+    return `${lastName} ${initials}`;
+  };
+
+  const employeeFormatted = formatFullName(emp?.fullName || sheet.employeeName);
+  const patientFormatted = formatFullName(sheet.patientName);
 
   const handleExportToExcel = () => {
     const employeeFullName = emp?.fullName || sheet.employeeName;
@@ -1950,11 +1962,11 @@ function ExpenseSheetView({
             </div>
             <div>
               <span className="text-slate-600">Сотрудник:</span>{' '}
-              <span className="font-semibold">{emp?.fullName || sheet.employeeName}</span>
+              <span className="font-semibold">{employeeFormatted}</span>
             </div>
             <div>
               <span className="text-slate-600">Пациент:</span>{' '}
-              <span className="font-semibold">{sheet.patientName}</span>
+              <span className="font-semibold">{patientFormatted}</span>
             </div>
             <div>
               <span className="text-slate-600">Дата рождения:</span>{' '}
