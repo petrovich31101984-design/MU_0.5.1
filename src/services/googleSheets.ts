@@ -440,16 +440,16 @@ export async function createTestExpenseSheets(): Promise<void> {
       employeeName: 'Иванов Иван Иванович',
       patientName: 'Петров Пётр Петрович',
       patientBirthDate: '1980-05-15',
-      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-10`,
+      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-05`,
       month: monthStr,
       callCategory: 'Первичный',
       therapyName: 'Детоксикация',
-      therapyCost: 5000,
+      therapyCost: 5800,
       items: [
-        { nomenclatureId: 'NOM-001', name: 'Налоксон', category: 'ЛС ПКУ', quantity: 2, pricePerUnit: 150, total: 300 },
-        { nomenclatureId: 'NOM-002', name: 'Физраствор', category: 'Расходный материал', quantity: 1, pricePerUnit: 50, total: 50 }
+        { nomenclatureId: 'NOM-001', name: 'Налоксон', category: 'ЛС ПКУ', quantity: 1, pricePerUnit: 150, total: 150 },
+        { nomenclatureId: 'NOM-002', name: 'Физраствор', category: 'Расходный материал', quantity: 2, pricePerUnit: 45, total: 90 }
       ],
-      totalAmount: 350,
+      totalAmount: 240,
       archived: false
     },
     {
@@ -458,16 +458,16 @@ export async function createTestExpenseSheets(): Promise<void> {
       employeeName: 'Сидорова Мария Ивановна',
       patientName: 'Кузнецов Алексей Сергеевич',
       patientBirthDate: '1975-08-22',
-      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-15`,
+      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-08`,
       month: monthStr,
       callCategory: 'Повторный',
       therapyName: 'Кодирование',
-      therapyCost: 8000,
+      therapyCost: 6500,
       items: [
-        { nomenclatureId: 'NOM-003', name: 'Дисульфирам', category: 'ЛС', quantity: 1, pricePerUnit: 450, total: 450 },
-        { nomenclatureId: 'NOM-004', name: 'Шприцы', category: 'Расходный материал', quantity: 5, pricePerUnit: 20, total: 100 }
+        { nomenclatureId: 'NOM-003', name: 'Дисульфирам', category: 'ЛС', quantity: 1, pricePerUnit: 180, total: 180 },
+        { nomenclatureId: 'NOM-004', name: 'Шприцы', category: 'Расходный материал', quantity: 3, pricePerUnit: 25, total: 75 }
       ],
-      totalAmount: 550,
+      totalAmount: 255,
       archived: false
     },
     {
@@ -476,17 +476,54 @@ export async function createTestExpenseSheets(): Promise<void> {
       employeeName: 'Козлов Дмитрий Александрович',
       patientName: 'Смирнова Елена Владимировна',
       patientBirthDate: '1990-12-03',
-      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-20`,
+      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-12`,
       month: monthStr,
       callCategory: 'Курс',
       therapyName: 'Реабилитация',
-      therapyCost: 15000,
+      therapyCost: 7200,
       items: [
-        { nomenclatureId: 'NOM-005', name: 'Налтрексон', category: 'ЛС', quantity: 1, pricePerUnit: 1200, total: 1200 },
-        { nomenclatureId: 'NOM-006', name: 'Витамины', category: 'ЛС', quantity: 1, pricePerUnit: 300, total: 300 },
-        { nomenclatureId: 'NOM-007', name: 'Капельницы', category: 'Оборудование', quantity: 3, pricePerUnit: 150, total: 450 }
+        { nomenclatureId: 'NOM-005', name: 'Налтрексон', category: 'ЛС ПКУ', quantity: 1, pricePerUnit: 200, total: 200 },
+        { nomenclatureId: 'NOM-006', name: 'Витамины', category: 'ЛС', quantity: 1, pricePerUnit: 80, total: 80 },
+        { nomenclatureId: 'NOM-007', name: 'Капельницы', category: 'Оборудование', quantity: 1, pricePerUnit: 50, total: 50 }
       ],
-      totalAmount: 1950,
+      totalAmount: 330,
+      archived: false
+    },
+    {
+      id: `EXP-TEST-${Date.now()}-4`,
+      employeeId: 'EMP-001',
+      employeeName: 'Иванов Иван Иванович',
+      patientName: 'Волков Сергей Николаевич',
+      patientBirthDate: '1985-03-18',
+      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-18`,
+      month: monthStr,
+      callCategory: 'Экстренный',
+      therapyName: 'Снятие ломки',
+      therapyCost: 8000,
+      items: [
+        { nomenclatureId: 'NOM-008', name: 'Морфин', category: 'ЛС ПКУ', quantity: 1, pricePerUnit: 250, total: 250 },
+        { nomenclatureId: 'NOM-009', name: 'Анальгин', category: 'ЛС', quantity: 2, pricePerUnit: 45, total: 90 },
+        { nomenclatureId: 'NOM-010', name: 'Салфетки', category: 'Расходный материал', quantity: 5, pricePerUnit: 10, total: 50 }
+      ],
+      totalAmount: 390,
+      archived: false
+    },
+    {
+      id: `EXP-TEST-${Date.now()}-5`,
+      employeeId: 'EMP-002',
+      employeeName: 'Сидорова Мария Ивановна',
+      patientName: 'Новикова Анна Дмитриевна',
+      patientBirthDate: '1992-07-25',
+      date: `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}-22`,
+      month: monthStr,
+      callCategory: 'Повторный',
+      therapyName: 'Поддерживающая терапия',
+      therapyCost: 6000,
+      items: [
+        { nomenclatureId: 'NOM-011', name: 'Бупренорфин', category: 'ЛС ПКУ', quantity: 1, pricePerUnit: 180, total: 180 },
+        { nomenclatureId: 'NOM-012', name: 'Успокоительное', category: 'ЛС', quantity: 1, pricePerUnit: 95, total: 95 }
+      ],
+      totalAmount: 275,
       archived: false
     }
   ];
