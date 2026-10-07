@@ -1859,7 +1859,6 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
     const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     return `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
   });
-  const [notifications, setNotifications] = useState<Array<{id: string; message: string; date: string; type: string}>>([]);
 
   // Фильтрация по месяцу
   const filteredSheets = expenseSheets.filter(s => s.month === selectedMonth && !s.archived);
@@ -1888,43 +1887,6 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
 
   return (
     <div className="space-y-6">
-      {/* Уведомления о лимите */}
-      {notifications.length > 0 && (
-        <div className={`${notifications.some(n => n.type === 'warning') ? 'bg-red-50 border-red-300' : 'bg-blue-50 border-blue-300'} border-2 rounded-lg p-4`}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className={`text-lg font-bold ${notifications.some(n => n.type === 'warning') ? 'text-red-700' : 'text-blue-700'}`}>
-              {notifications.some(n => n.type === 'warning') ? '⚠️ Уведомления о превышении лимита' : 'ℹ️ Уведомления о лимите'}
-            </h3>
-            <button 
-              onClick={() => setNotifications([])}
-              className={`${notifications.some(n => n.type === 'warning') ? 'text-red-600 hover:text-red-800' : 'text-blue-600 hover:text-blue-800'} text-sm font-medium`}
-            >
-              Очистить все
-            </button>
-          </div>
-          <div className="space-y-2">
-            {notifications.map(notif => (
-              <div key={notif.id} className={`bg-white border ${notif.type === 'warning' ? 'border-red-200' : 'border-blue-200'} rounded p-3`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-800">{notif.message}</p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {new Date(notif.date).toLocaleString('ru-RU')}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}
-                    className={`${notif.type === 'warning' ? 'text-red-500 hover:text-red-700' : 'text-blue-500 hover:text-blue-700'} ml-2`}
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="flex justify-between items-start">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">📤 Расход у сотрудника</h2>
