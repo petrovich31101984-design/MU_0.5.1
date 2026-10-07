@@ -2384,6 +2384,7 @@ function ExpenseSheetView({
 // ============ АРХИВ ============
 function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
   const { employees, expenseSheets, setExpenseSheets } = data;
+  const [filterType, setFilterType] = useState<'month' | 'quarter' | 'halfyear' | 'year' | 'all'>('month');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -2391,8 +2392,54 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
   });
   const [showArchiveList, setShowArchiveList] = useState(false);
 
-  // Фильтрация по месяцу (только архивированные)
-  const archivedSheets = expenseSheets.filter(s => s.month === selectedMonth && s.archived);
+  // Функция для определения периода
+  const getPeriodMonths = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+
+    switch (filterType) {
+      case 'month':
+        return [selectedMonth];
+      case 'quarter': {
+        const quarterStart = Math.floor(currentMonth / 3) * 3;
+        const months = [];
+        for (let i = 0; i < 3; i++) {
+          const month = quarterStart + i;
+          months.push(`${currentYear}-${String(month + 1).padStart(2, '0')}`);
+        }
+        return months;
+      }
+      case 'halfyear': {
+        const halfyearStart = Math.floor(currentMonth / 6) * 6;
+        const months = [];
+        for (let i = 0; i < 6; i++) {
+          const month = halfyearStart + i;
+          months.push(`${currentYear}-${String(month + 1).padStart(2, '0')}`);
+        }
+        return months;
+      }
+      case 'year': {
+        const months = [];
+        for (let i = 0; i < 12; i++) {
+          months.push(`${currentYear}-${String(i + 1).padStart(2, '0')}`);
+        }
+        return months;
+      }
+      case 'all':
+        return []; // Пустой массив означает все месяцы
+      default:
+        return [selectedMonth];
+    }
+  };
+
+  // Фильтрация по выбранному периоду (только архивированные)
+  const archivedSheets = expenseSheets.filter(s => {
+    if (!s.archived) return false;
+    if (filterType === 'all') return true;
+    const periodMonths = getPeriodMonths();
+    return periodMonths.includes(s.month);
+  });
 
   // Расчёт статистики
   const totalExpense = archivedSheets.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -2409,6 +2456,29 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
       months.push({ value: monthStr, label: monthName });
     }
     return months;
+  };
+
+  // Получение текста для отображения периода
+  const getPeriodLabel = () => {
+    const now = new Date();
+    switch (filterType) {
+      case 'month':
+        return new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+      case 'quarter': {
+        const quarter = Math.floor(now.getMonth() / 3) + 1;
+        return `${quarter} квартал ${now.getFullYear()}`;
+      }
+      case 'halfyear': {
+        const halfyear = Math.floor(now.getMonth() / 6) + 1;
+        return `${halfyear} полугодие ${now.getFullYear()}`;
+      }
+      case 'year':
+        return `${now.getFullYear()} год`;
+      case 'all':
+        return 'Всё время';
+      default:
+        return '';
+    }
   };
 
   // Восстановление из архива
@@ -2429,17 +2499,32 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
         <div>
           <h2 className="text-2xl font-bold text-slate-800">🗄️ Архив</h2>
         </div>
-        <select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-        >
-          {generateMonthOptions().map(month => (
-            <option key={month.value} value={month.value}>
-              {month.label}
-            </option>
-          ))}
-        </select>
+        <div className="flex gap-2">
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as any)}
+            className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          >
+            <option value="month">Месяц</option>
+            <option value="quarter">Квартал</option>
+            <option value="halfyear">Полгода</option>
+            <option value="year">Год</option>
+            <option value="all">Всё время</option>
+          </select>
+          {filterType === 'month' && (
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            >
+              {generateMonthOptions().map(month => (
+                <option key={month.value} value={month.value}>
+                  {month.label}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
 
       {/* Карточки статистики */}
@@ -2451,7 +2536,7 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
         >
           <div className="text-xs text-slate-500 uppercase mb-1">ЛИСТОВ В АРХИВЕ</div>
           <div className="text-lg font-bold text-slate-600">{sheetsCount}</div>
-          <div className="text-xs text-slate-500 mt-1 uppercase">{new Date(selectedMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
+          <div className="text-xs text-slate-500 mt-1 uppercase">{getPeriodLabel()}</div>
         </div>
       </div>
 
@@ -2471,7 +2556,7 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
             <div className="p-6 space-y-6">
               {archivedSheets.length === 0 ? (
                 <div className="bg-white rounded-xl p-8 text-center text-slate-500 border border-slate-200">
-                  <p>Нет архивированных листов расхода за выбранный месяц</p>
+                  <p>Нет архивированных листов расхода за {getPeriodLabel()}</p>
                 </div>
               ) : (
                 archivedSheets.map(sheet => (
