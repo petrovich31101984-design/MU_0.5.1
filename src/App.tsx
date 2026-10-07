@@ -2013,6 +2013,38 @@ function ExpenseSheetView({
 
       {/* Тело - белый цвет */}
       <div className="bg-white p-6">
+        {/* Препараты и расходники */}
+        <div className="mb-2">
+          <h3 className="text-base font-semibold text-slate-800">Препараты и расходники</h3>
+        </div>
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b-2 border-slate-400">
+              <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Название</th>
+              <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Тип</th>
+              <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700">Количество</th>
+              <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Цена за единицу</th>
+              <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Сумма</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sheet.items.length > 0 ? (
+              sheet.items.map(item => (
+                <tr key={item.nomenclatureId} className="border-b border-slate-200">
+                  <td className="px-3 py-2 text-sm text-slate-800">{item.name}</td>
+                  <td className="px-3 py-2 text-sm text-slate-700">{item.category}</td>
+                  <td className="px-3 py-2 text-center text-sm text-slate-800">{item.quantity}</td>
+                  <td className="px-3 py-2 text-right text-sm text-slate-700">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
+                  <td className="px-3 py-2 text-right text-sm font-semibold text-slate-800">{item.total.toLocaleString('ru-RU')} ₽</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="px-3 py-4 text-center text-sm text-slate-400">Нет данных</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
