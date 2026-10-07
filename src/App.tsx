@@ -253,7 +253,7 @@ export default function App() {
       case 'nomenclature': return <NomenclaturePage data={data} />;
       case 'arrival': return <ArrivalPage data={data} />;
       case 'expense': return <ExpensePage data={data} />;
-      case 'balance': return <BalancePage data={data} />;
+      case 'balance': return <BalancePage />;
       case 'archive': return <ArchivePage data={data} />;
       case 'chat': return <ChatPage data={data} />;
       case 'reports': return <ReportsPage data={data} />;
@@ -2714,85 +2714,11 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
 }
 
 // ============ ОСТАТОК У СОТРУДНИКА ============
-function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, nomenclature, arrivals, expenses, returns } = data;
-  const activeEmployees = employees.filter(e => e.status === 'Активен');
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-  const stockByNomenclature = () => {
-    const map: Record<string, { qty: number; value: number; name: string; unit: string; price: number }> = {};
-    expenses.filter(e => e.month === currentMonth).forEach(e => {
-      if (!map[e.nomenclatureId]) {
-        const nom = nomenclature.find(n => n.id === e.nomenclatureId);
-        if (nom) map[e.nomenclatureId] = { qty: 0, value: 0, name: nom.name, unit: nom.unit, price: nom.currentPrice };
-      }
-      if (map[e.nomenclatureId]) map[e.nomenclatureId].qty -= e.quantity;
-    });
-    returns.filter(r => r.status === 'Принят' || r.status === 'Скорректирован').forEach(r => {
-      if (map[r.nomenclatureId]) map[r.nomenclatureId].qty += (r.correctedQuantity ?? r.quantity);
-    });
-    return Object.entries(map).filter(([, v]) => v.qty > 0).map(([id, v]) => ({ id, ...v, value: v.qty * v.price }));
-  };
-
-  const totalValue = stockByNomenclature().reduce((s, i) => s + i.value, 0);
-  const totalItems = stockByNomenclature().reduce((s, i) => s + i.qty, 0);
-
+function BalancePage() {
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-slate-800">🧰 Остаток у сотрудника</h2>
-        <p className="text-slate-500 text-sm mt-1">Период: {currentMonth}</p>
-      </div>
-
-      <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border border-slate-200 shadow-sm">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <div className="text-2xl font-bold text-purple-600">{totalValue.toLocaleString('ru-RU')} ₽</div>
-            <div className="text-xs text-slate-500 mt-1">Общая стоимость</div>
-          </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <div className="text-2xl font-bold text-blue-600">{totalItems}</div>
-            <div className="text-xs text-slate-500 mt-1">Единиц</div>
-          </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <div className="text-2xl font-bold text-emerald-600">{activeEmployees.length}</div>
-            <div className="text-xs text-slate-500 mt-1">Сотрудников</div>
-          </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <div className="text-2xl font-bold text-yellow-600">{stockByNomenclature().length}</div>
-            <div className="text-xs text-slate-500 mt-1">Позиций</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="p-5 border-b border-slate-200 bg-slate-50">
-          <h3 className="text-lg font-bold text-slate-800">Остатки по номенклатуре</h3>
-        </div>
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 text-left bg-slate-50">
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Препарат</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Кол-во</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Цена/ед.</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Стоимость</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stockByNomenclature().sort((a, b) => b.value - a.value).map(item => (
-              <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-5 py-3 text-sm text-slate-800">{item.name}</td>
-                <td className="px-5 py-3 text-right text-sm text-slate-800">{item.qty} {item.unit}</td>
-                <td className="px-5 py-3 text-right text-sm text-slate-700">{item.price.toLocaleString('ru-RU')} ₽</td>
-                <td className="px-5 py-3 text-right text-sm font-semibold text-emerald-600">{item.value.toLocaleString('ru-RU')} ₽</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {stockByNomenclature().length === 0 && (
-          <div className="p-8 text-center text-slate-500"><p>Нет данных об остатках</p></div>
-        )}
       </div>
     </div>
   );
