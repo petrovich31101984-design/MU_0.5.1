@@ -1942,43 +1942,47 @@ function ExpenseSheetView({
         </div>
         
         {/* Информация в шапке */}
-        <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-          <div>
-            <span className="text-slate-600">Дата составления:</span>{' '}
-            <span className="font-semibold">{formatDateShort(sheet.date)}</span>
+        <div className="space-y-2 text-sm">
+          <div className="flex flex-wrap gap-x-6 gap-y-1">
+            <div>
+              <span className="text-slate-600">Дата составления:</span>{' '}
+              <span className="font-semibold">{formatDateShort(sheet.date)}</span>
+            </div>
+            <div>
+              <span className="text-slate-600">Сотрудник:</span>{' '}
+              <span className="font-semibold">{emp?.fullName || sheet.employeeName}</span>
+            </div>
+            <div>
+              <span className="text-slate-600">Пациент:</span>{' '}
+              <span className="font-semibold">{sheet.patientName}</span>
+            </div>
+            <div>
+              <span className="text-slate-600">Дата рождения:</span>{' '}
+              <span className="font-semibold">{sheet.patientBirthDate ? formatDateShort(sheet.patientBirthDate) : '-'}</span>
+            </div>
           </div>
-          <div>
-            <span className="text-slate-600">Сотрудник:</span>{' '}
-            <span className="font-semibold">{emp?.fullName || sheet.employeeName}</span>
-          </div>
-          <div>
-            <span className="text-slate-600">Пациент:</span>{' '}
-            <span className="font-semibold">{sheet.patientName}</span>
-          </div>
-          <div>
-            <span className="text-slate-600">Дата рождения:</span>{' '}
-            <span className="font-semibold">{sheet.patientBirthDate ? formatDateShort(sheet.patientBirthDate) : '-'}</span>
-          </div>
-          <div>
-            <span className="text-slate-600">Категория выезда:</span>{' '}
-            <span className="font-semibold">{sheet.callCategory}</span>
-          </div>
-          <div>
-            <span className="text-slate-600">Название терапии:</span>{' '}
-            <span className="font-semibold">{sheet.therapyName || '-'}</span>
-          </div>
-          <div>
-            <span className="text-slate-600">Стоимость терапии:</span>{' '}
-            <span className="font-semibold">
-              {sheet.therapyCost.toLocaleString('ru-RU')} ₽
-              {sheet.therapyCost > 0 && (
-                <span className="text-slate-500 ml-2">(лимит: {limitAmount.toLocaleString('ru-RU')} ₽)</span>
-              )}
-            </span>
-          </div>
-          <div>
-            <span className="text-slate-600">Итого по препаратам:</span>{' '}
-            <span className="font-semibold">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</span>
+          <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+            <div>
+              <span className="text-slate-600">Категория выезда:</span>{' '}
+              <span className="font-semibold">{sheet.callCategory}</span>
+            </div>
+            <div>
+              <span className="text-slate-600">Название терапии:</span>{' '}
+              <span className="font-semibold">{sheet.therapyName || '-'}</span>
+            </div>
+            <div>
+              <span className="text-slate-600">Стоимость терапии:</span>{' '}
+              <span className="font-semibold">
+                {sheet.therapyCost.toLocaleString('ru-RU')} ₽
+                {sheet.therapyCost > 0 && (
+                  <span className="text-slate-500 ml-2">(лимит: {limitAmount.toLocaleString('ru-RU')} ₽)</span>
+                )}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-600">Итого по препаратам:</span>{' '}
+              <span className="font-semibold">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</span>
+            </div>
           </div>
         </div>
       </div>
