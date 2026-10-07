@@ -1850,124 +1850,6 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
   );
 }
 
-// ============ КОМПОНЕНТ ЛИСТА РАСХОДА ============
-function ExpenseSheetView({
-  sheet,
-  employees
-}: {
-  sheet: gs.ExpenseSheet;
-  employees: gs.Employee[];
-}) {
-  const emp = employees.find(e => e.id === sheet.employeeId);
-  const limit = sheet.therapyCost > 0 ? (sheet.totalAmount * 100) / sheet.therapyCost : 0;
-  const limitAmount = sheet.therapyCost * 0.05; // 5% от стоимости терапии
-  const isExceeded = limit > 5;
-  const isLow = limit < 2.5;
-
-  // Форматирование даты в ДД.ММ.ГГ
-  const formatDateShort = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = String(date.getFullYear()).slice(-2);
-    return `${day}.${month}.${year}`;
-  };
-
-  // Инициалы сотрудника и пациента
-  const employeeInitials = emp?.fullName.split(' ').map(n => n[0]).join('.') || sheet.employeeName;
-  const patientInitials = sheet.patientName.split(' ').map(n => n[0]).join('.');
-
-  return (
-    <div className="bg-white border-2 border-slate-300 rounded-lg p-8 shadow-sm">
-      {/* Заголовок */}
-      <h2 className="text-2xl font-bold text-center text-slate-800 mb-6 pb-4 border-b-2 border-slate-300">Лист расхода</h2>
-
-      {/* Основная информация */}
-      <div className="mb-4 text-sm space-y-2">
-        <div className="flex flex-wrap gap-4">
-          <div><span className="text-slate-600">Дата создания:</span> <span className="font-semibold">{formatDateShort(sheet.date)}</span></div>
-          <div><span className="text-slate-600">Сотрудник:</span> <span className="font-semibold">{employeeInitials}</span></div>
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <div><span className="text-slate-600">Пациент:</span> <span className="font-semibold">{patientInitials}</span></div>
-          <div><span className="text-slate-600">Дата рождения:</span> <span className="font-semibold">{sheet.patientBirthDate ? formatDateShort(sheet.patientBirthDate) : '-'}</span></div>
-        </div>
-      </div>
-
-      {/* Категория и терапия */}
-      <div className="mb-4 text-sm space-y-2">
-        <div><span className="text-slate-600">Категория выезда:</span> <span className="font-semibold">{sheet.callCategory}</span></div>
-        <div><span className="text-slate-600">Название терапии:</span> <span className="font-semibold">{sheet.therapyName || '-'}</span></div>
-      </div>
-
-      {/* Стоимость терапии */}
-      <div className="mb-4 text-sm space-y-2">
-        <div className="flex justify-between">
-          <span className="text-slate-600">Стоимость терапии:</span>
-          <span className="font-semibold">
-            {sheet.therapyCost.toLocaleString('ru-RU')} ₽
-            {sheet.therapyCost > 0 && <span className="text-slate-500 ml-2">(лимит 5%: {limitAmount.toLocaleString('ru-RU')} ₽)</span>}
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-slate-600">Итого по препаратам:</span>
-          <span className="font-semibold">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</span>
-        </div>
-      </div>
-
-      {/* Использование лимита */}
-      {sheet.therapyCost > 0 && (
-        <div className="mb-6 p-3 border border-slate-300 rounded">
-          <div className="text-sm font-semibold mb-1">Использование лимита</div>
-          <div className="text-sm">
-            <span className="text-slate-600">Лимит: </span>
-            <span className={`font-bold ${isExceeded ? 'text-red-600' : isLow ? 'text-slate-500' : 'text-emerald-600'}`}>
-              {limit.toFixed(2)}%
-            </span>
-          </div>
-          {isExceeded && <div className="text-xs text-red-600 mt-1">⚠️ Превышение лимита 5%</div>}
-          {isLow && <div className="text-xs text-slate-500 mt-1">ℹ️ Лимит ниже 2.5%</div>}
-        </div>
-      )}
-
-      {/* Препараты и материалы */}
-      {sheet.items.length > 0 && (
-        <div>
-          <h3 className="text-lg font-bold text-slate-800 mb-3 pb-2 border-b border-slate-300">Препараты и материалы</h3>
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b-2 border-slate-400">
-                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Название</th>
-                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Тип</th>
-                <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700">Кол-во</th>
-                <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Цена за единицу (₽)</th>
-                <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Сумма (₽)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sheet.items.map(item => (
-                <tr key={item.nomenclatureId} className="border-b border-slate-200">
-                  <td className="px-3 py-2 text-sm text-slate-800">{item.name}</td>
-                  <td className="px-3 py-2 text-sm text-slate-700">{item.category}</td>
-                  <td className="px-3 py-2 text-center text-sm text-slate-800">{item.quantity}</td>
-                  <td className="px-3 py-2 text-right text-sm text-slate-700">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
-                  <td className="px-3 py-2 text-right text-sm font-semibold text-slate-800">{item.total.toLocaleString('ru-RU')} ₽</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-slate-400 font-bold">
-                <td colSpan={4} className="px-3 py-3 text-right text-sm text-slate-800">ИТОГО</td>
-                <td className="px-3 py-3 text-right text-base text-slate-800">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ============ РАСХОД У СОТРУДНИКА ============
 function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
   const { employees, expenseSheets } = data;
@@ -2042,18 +1924,7 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
         </div>
       </div>
 
-      {/* Листы расхода */}
-      <div className="space-y-6">
-        {filteredSheets.length === 0 ? (
-          <div className="bg-white rounded-xl p-8 text-center text-slate-500 border border-slate-200">
-            <p>Нет листов расхода за выбранный месяц</p>
-          </div>
-        ) : (
-          filteredSheets.map(sheet => (
-            <ExpenseSheetView key={sheet.id} sheet={sheet} employees={employees} />
-          ))
-        )}
-      </div>
+
     </div>
   );
 }
