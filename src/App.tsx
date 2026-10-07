@@ -253,7 +253,7 @@ export default function App() {
       case 'nomenclature': return <NomenclaturePage data={data} />;
       case 'arrival': return <ArrivalPage data={data} />;
       case 'expense': return <ExpensePage data={data} />;
-      case 'balance': return <BalancePage />;
+      case 'balance': return <BalancePage data={data} />;
       case 'archive': return <ArchivePage data={data} />;
       case 'chat': return <ChatPage data={data} />;
       case 'reports': return <ReportsPage data={data} />;
@@ -2714,18 +2714,66 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
 }
 
 // ============ ОСТАТОК У СОТРУДНИКА ============
-function BalancePage() {
+function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
+  const { employees, nomenclature } = data;
+  
+  // Получаем только активных сотрудников
+  const activeEmployees = employees.filter(e => e.status === 'Активен');
+
   return (
     <div className="space-y-6">
       {/* Шапка */}
-      <div className="bg-slate-100 px-6 py-4 border-b border-slate-300">
+      <div className="bg-slate-100 px-6 py-4 shadow-md">
         <h2 className="text-2xl font-bold text-slate-800">🧰 Остаток у сотрудника</h2>
         <p className="text-slate-600 mt-1">Просмотр остатков номенклатуры у сотрудников</p>
       </div>
 
       {/* Тело */}
       <div className="bg-white p-6">
-        {/* Здесь будет содержимое раздела */}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-slate-100">
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Номенклатура</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Тип</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Ед. изм.</th>
+                <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700 border border-slate-300">Цена за единицу</th>
+                {activeEmployees.map(emp => (
+                  <th key={emp.id} className="px-3 py-2 text-center text-sm font-semibold text-slate-700 border border-slate-300">
+                    {emp.fullName.split(' ').map(n => n[0]).join('.')}
+                  </th>
+                ))}
+                <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700 border border-slate-300 bg-slate-200">Итого</th>
+              </tr>
+            </thead>
+            <tbody>
+              {nomenclature.length === 0 ? (
+                <tr>
+                  <td colSpan={4 + activeEmployees.length + 1} className="px-3 py-8 text-center text-sm text-slate-400 border border-slate-300">
+                    Нет данных
+                  </td>
+                </tr>
+              ) : (
+                nomenclature.map(item => (
+                  <tr key={item.id} className="hover:bg-slate-50">
+                    <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300">{item.name}</td>
+                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300">{item.category}</td>
+                    <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300">{item.unit}</td>
+                    <td className="px-3 py-2 text-sm text-slate-700 text-right border border-slate-300">{item.currentPrice.toLocaleString('ru-RU')} ₽</td>
+                    {activeEmployees.map(emp => (
+                      <td key={emp.id} className="px-3 py-2 text-sm text-slate-700 text-center border border-slate-300">
+                        -
+                      </td>
+                    ))}
+                    <td className="px-3 py-2 text-sm font-semibold text-slate-800 text-right border border-slate-300 bg-slate-50">
+                      0 ₽
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
