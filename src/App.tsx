@@ -2737,6 +2737,7 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
                 <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Номенклатура</th>
                 <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Тип</th>
                 <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Ед. изм.</th>
+                <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700 border border-slate-300">Количество</th>
                 <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700 border border-slate-300">Цена за единицу</th>
                 {activeEmployees.map(emp => (
                   <th key={emp.id} className="px-3 py-2 text-center text-sm font-semibold text-slate-700 border border-slate-300">
@@ -2749,7 +2750,7 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
             <tbody>
               {nomenclature.length === 0 ? (
                 <tr>
-                  <td colSpan={4 + activeEmployees.length + 1} className="px-3 py-8 text-center text-sm text-slate-400 border border-slate-300">
+                  <td colSpan={5 + activeEmployees.length + 1} className="px-3 py-8 text-center text-sm text-slate-400 border border-slate-300">
                     Нет данных
                   </td>
                 </tr>
@@ -2759,6 +2760,7 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
                     <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300">{item.name}</td>
                     <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300">{item.category}</td>
                     <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300">{item.unit}</td>
+                    <td className="px-3 py-2 text-sm text-slate-700 text-right border border-slate-300">0</td>
                     <td className="px-3 py-2 text-sm text-slate-700 text-right border border-slate-300">{item.currentPrice.toLocaleString('ru-RU')} ₽</td>
                     {activeEmployees.map(emp => (
                       <td key={emp.id} className="px-3 py-2 text-sm text-slate-700 text-center border border-slate-300">
