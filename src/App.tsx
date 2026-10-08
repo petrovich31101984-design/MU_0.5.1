@@ -2823,18 +2823,18 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
               ) : (
                 <>
                   {nomenclature.map(item => (
-                    <tr key={item.id} className="hover:bg-slate-50">
-                      <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-0 bg-white z-10">{item.name}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[200px] bg-white z-10">{item.category}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[320px] bg-white z-10">{item.unit}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[420px] bg-white z-10">{item.currentPrice.toLocaleString('ru-RU')} ₽</td>
-                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[540px] bg-white z-10">0</td>
+                    <tr key={item.id}>
+                      <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300 sticky left-0 bg-white z-10 hover:bg-blue-50 transition-colors">{item.name}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[200px] bg-white z-10 hover:bg-blue-50 transition-colors">{item.category}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[320px] bg-white z-10 hover:bg-blue-50 transition-colors">{item.unit}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[420px] bg-white z-10 hover:bg-blue-50 transition-colors">{item.currentPrice.toLocaleString('ru-RU')} ₽</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300 sticky left-[540px] bg-white z-10 hover:bg-blue-50 transition-colors">0</td>
                       {activeEmployees.map(emp => (
-                        <td key={emp.id} className="px-3 py-2 text-sm text-slate-700 border border-slate-300">
+                        <td key={emp.id} className="px-3 py-2 text-sm text-slate-700 border border-slate-300 hover:bg-blue-50 transition-colors">
                           -
                         </td>
                       ))}
-                      <td className="px-3 py-2 text-sm font-semibold text-slate-800 border border-slate-300 bg-slate-50 sticky right-0 z-10">
+                      <td className="px-3 py-2 text-sm font-semibold text-slate-800 border border-slate-300 bg-slate-50 sticky right-0 z-10 hover:bg-blue-100 transition-colors">
                         0 ₽
                       </td>
                     </tr>
