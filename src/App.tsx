@@ -2678,11 +2678,8 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
                         <div className="flex-1">
                           <div className="font-semibold text-slate-800">{emp.fullName}</div>
                           <div className="text-sm text-slate-500 mt-1">{emp.position}</div>
-                          <div className="text-xs text-slate-400 mt-2">
-                            Персональный номер: {emp.personalNumber}
-                          </div>
                           {emp.phone && (
-                            <div className="text-xs text-slate-400 mt-1">
+                            <div className="text-xs text-slate-400 mt-2">
                               Телефон: {emp.phone}
                             </div>
                           )}
@@ -2691,6 +2688,9 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
                               Дата найма: {new Date(emp.hireDate).toLocaleDateString('ru-RU')}
                             </div>
                           )}
+                          <div className="text-xs text-red-600 mt-1 font-semibold">
+                            Дата увольнения: {new Date().toLocaleDateString('ru-RU')}
+                          </div>
                         </div>
                       </div>
                     </div>
