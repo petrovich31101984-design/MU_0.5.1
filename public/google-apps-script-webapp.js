@@ -121,9 +121,6 @@ function doPost(e) {
       case 'restoreExpenseSheet':
         restoreExpenseSheetRow(data.data.id);
         return jsonResponse({ success: true });
-      case 'createTestExpenseSheets':
-        createTestExpenseSheetsRow(data.data);
-        return jsonResponse({ success: true });
       case 'createAnnouncement':
         createAnnouncementRow(data.data);
         return jsonResponse({ success: true });
@@ -502,41 +499,6 @@ function restoreExpenseSheetRow(id) {
       writeAudit('Листы расхода', id, 'Восстановление из архива', '', '');
       break;
     }
-  }
-}
-
-function createTestExpenseSheetsRow(testSheets) {
-  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
-  
-  // Если лист не существует, создаём его
-  if (!sheet) {
-    Logger.log('Лист "Листы расхода" не найден, создаём...');
-    createSheet_ExpenseSheets(SpreadsheetApp.getActiveSpreadsheet());
-    sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Листы расхода');
-    
-    if (!sheet) {
-      throw new Error('Не удалось создать лист "Листы расхода"');
-    }
-  }
-  
-  for (const data of testSheets) {
-    sheet.appendRow([
-      data.id || '',
-      data.employeeId || '',
-      data.employeeName || '',
-      data.patientName || '',
-      data.patientBirthDate || '',
-      data.date || new Date(),
-      data.month || '',
-      data.callCategory || '',
-      data.therapyName || '',
-      data.therapyCost || 0,
-      JSON.stringify(data.items || []),
-      data.totalAmount || 0,
-      data.archived ? 'ДА' : 'НЕТ',
-      new Date()
-    ]);
-    writeAudit('Листы расхода', data.id, 'Создание (тест)', '', 'Тестовый лист расхода: ' + data.patientName);
   }
 }
 
