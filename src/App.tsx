@@ -2593,11 +2593,10 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
       </div>
 
       {/* Карточки статистики */}
-      <div className="flex gap-0">
+      <div className="flex" style={{ gap: 'calc(100% / 13)' }}>
         <div 
           onClick={() => setShowArchiveList(true)}
-          className="bg-white rounded-l-lg p-2 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:bg-blue-50 transition-all"
-          style={{ minWidth: '120px' }}
+          className="flex-1 bg-white rounded-lg p-2 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-500 hover:shadow-md transition-all"
         >
           <div className="text-xs text-slate-500 uppercase mb-1">ЛИСТОВ В АРХИВЕ</div>
           <div className="text-lg font-bold text-slate-600">{sheetsCount}</div>
@@ -2606,8 +2605,7 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
         
         <div 
           onClick={() => setShowFiredEmployees(true)}
-          className="bg-white rounded-r-lg p-2 border border-slate-200 border-l-0 shadow-sm flex flex-col justify-between cursor-pointer hover:bg-red-50 transition-all"
-          style={{ minWidth: '120px' }}
+          className="flex-1 bg-white rounded-lg p-2 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-red-500 hover:shadow-md transition-all"
         >
           <div className="text-xs text-slate-500 uppercase mb-1">СОТРУДНИКИ</div>
           <div className="text-lg font-bold text-red-600">{firedEmployees.length}</div>
