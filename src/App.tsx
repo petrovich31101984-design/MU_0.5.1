@@ -2452,6 +2452,10 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
     return `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
   });
   const [showArchiveList, setShowArchiveList] = useState(false);
+  const [showFiredEmployees, setShowFiredEmployees] = useState(false);
+  
+  // Получение уволенных сотрудников
+  const firedEmployees = employees.filter(e => e.status === 'Уволен');
 
   // Функция для определения периода
   const getPeriodMonths = () => {
@@ -2589,7 +2593,7 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
       </div>
 
       {/* Карточки статистики */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div 
           onClick={() => setShowArchiveList(true)}
           className="bg-white rounded-lg p-2 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-500 hover:shadow-md transition-all"
@@ -2598,6 +2602,16 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
           <div className="text-xs text-slate-500 uppercase mb-1">ЛИСТОВ В АРХИВЕ</div>
           <div className="text-lg font-bold text-slate-600">{sheetsCount}</div>
           <div className="text-xs text-slate-500 mt-1 uppercase">{getPeriodLabel()}</div>
+        </div>
+        
+        <div 
+          onClick={() => setShowFiredEmployees(true)}
+          className="bg-white rounded-lg p-2 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-red-500 hover:shadow-md transition-all"
+          style={{ width: 'fit-content', minWidth: '120px' }}
+        >
+          <div className="text-xs text-slate-500 uppercase mb-1">СОТРУДНИКИ</div>
+          <div className="text-lg font-bold text-red-600">{firedEmployees.length}</div>
+          <div className="text-xs text-slate-500 mt-1 uppercase">Уволено</div>
         </div>
       </div>
 
@@ -2631,6 +2645,59 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
                     isArchived={true}
                   />
                 ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно со списком уволенных сотрудников */}
+      {showFiredEmployees && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-slate-100 px-6 py-4 flex justify-between items-center border-b border-slate-300">
+              <h2 className="text-xl font-bold text-slate-800">👥 Уволенные сотрудники</h2>
+              <button 
+                onClick={() => setShowFiredEmployees(false)}
+                className="text-slate-500 hover:text-slate-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              {firedEmployees.length === 0 ? (
+                <div className="bg-white rounded-xl p-8 text-center text-slate-500 border border-slate-200">
+                  <p>Нет уволенных сотрудников</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {firedEmployees.map(emp => (
+                    <div key={emp.id} className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-lg">
+                          {emp.fullName.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-slate-800">{emp.fullName}</div>
+                          <div className="text-sm text-slate-500 mt-1">{emp.position}</div>
+                          <div className="text-xs text-slate-400 mt-2">
+                            Персональный номер: {emp.personalNumber}
+                          </div>
+                          {emp.phone && (
+                            <div className="text-xs text-slate-400 mt-1">
+                              Телефон: {emp.phone}
+                            </div>
+                          )}
+                          {emp.hireDate && (
+                            <div className="text-xs text-slate-400 mt-1">
+                              Дата найма: {new Date(emp.hireDate).toLocaleDateString('ru-RU')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
