@@ -2887,8 +2887,8 @@ function ExpensePage({ data }: { data: ReturnType<typeof useData> }) {
 function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
   const { employees, nomenclature, arrivals, expenseSheets } = data;
   
-  // Получаем только активных сотрудников
-  const activeEmployees = employees.filter(e => e.status === 'Активен');
+  // Получаем всех сотрудников, кроме уволенных
+  const activeEmployees = employees.filter(e => e.status !== 'Уволен');
 
   // Функция для расчёта остатка по сотруднику и номенклатуре
   const calculateBalance = (employeeId: string, nomenclatureId: string): number => {
