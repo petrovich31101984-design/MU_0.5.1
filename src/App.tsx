@@ -2092,20 +2092,28 @@ function EditExpenseSheetModal({
             </div>
             
             <table className="w-full border-collapse">
+              <colgroup>
+                <col style={{ width: '35%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '8%' }} />
+              </colgroup>
               <thead>
                 <tr className="bg-slate-100">
-                  <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Название</th>
-                  <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Тип</th>
-                  <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700">Количество</th>
-                  <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Цена за единицу</th>
-                  <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Сумма</th>
-                  <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700">Действия</th>
+                  <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Название</th>
+                  <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Тип</th>
+                  <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700 border border-slate-300">Количество</th>
+                  <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700 border border-slate-300">Цена за единицу</th>
+                  <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700 border border-slate-300">Сумма</th>
+                  <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700 border border-slate-300">Действия</th>
                 </tr>
               </thead>
               <tbody>
                 {formData.items.map((item, index) => (
                   <tr key={index} className="border-b border-slate-200">
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 border border-slate-300">
                       <input
                         type="text"
                         value={item.name}
@@ -2113,7 +2121,7 @@ function EditExpenseSheetModal({
                         className="w-full px-2 py-1 border border-slate-300 rounded text-sm"
                       />
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 border border-slate-300">
                       <select
                         value={item.category}
                         onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
@@ -2125,7 +2133,7 @@ function EditExpenseSheetModal({
                         <option value="Оборудование">Оборудование</option>
                       </select>
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 border border-slate-300">
                       <input
                         type="number"
                         value={item.quantity}
@@ -2134,7 +2142,7 @@ function EditExpenseSheetModal({
                         min="1"
                       />
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 border border-slate-300">
                       <input
                         type="number"
                         value={item.pricePerUnit}
@@ -2143,10 +2151,10 @@ function EditExpenseSheetModal({
                         min="0"
                       />
                     </td>
-                    <td className="px-3 py-2 text-right text-sm font-semibold text-slate-800">
+                    <td className="px-3 py-2 text-right text-sm font-semibold text-slate-800 border border-slate-300">
                       {item.total.toLocaleString('ru-RU')} ₽
                     </td>
-                    <td className="px-3 py-2 text-center">
+                    <td className="px-3 py-2 text-center border border-slate-300">
                       <button
                         onClick={() => handleRemoveItem(index)}
                         className="text-red-600 hover:text-red-800"
@@ -2385,19 +2393,24 @@ function ExpenseSheetView({
         <div className="mb-2">
           <h3 className="text-base font-semibold text-slate-800">Препараты и расходники</h3>
         </div>
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-slate-100">
-              <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Название</th>
-              <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700">Тип</th>
-              <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700">Количество</th>
-              <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Цена за единицу</th>
-              <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700">Сумма</th>
-            </tr>
-          </thead>
-        </table>
         <div className="overflow-y-auto" style={{ maxHeight: '400px' }}>
           <table className="w-full border-collapse">
+            <colgroup>
+              <col style={{ width: '40%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
+            </colgroup>
+            <thead>
+              <tr className="bg-slate-100">
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Название</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-slate-700 border border-slate-300">Тип</th>
+                <th className="px-3 py-2 text-center text-sm font-semibold text-slate-700 border border-slate-300">Количество</th>
+                <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700 border border-slate-300">Цена за единицу</th>
+                <th className="px-3 py-2 text-right text-sm font-semibold text-slate-700 border border-slate-300">Сумма</th>
+              </tr>
+            </thead>
             <tbody>
               {sheet.items.length > 0 ? (
                 [...sheet.items]
@@ -2409,30 +2422,28 @@ function ExpenseSheetView({
                   })
                   .map(item => (
                     <tr key={item.nomenclatureId} className="border-b border-slate-200">
-                      <td className="px-3 py-2 text-sm text-slate-800">{item.name}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700">{item.category}</td>
-                      <td className="px-3 py-2 text-center text-sm text-slate-800">{item.quantity}</td>
-                      <td className="px-3 py-2 text-right text-sm text-slate-700">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
-                      <td className="px-3 py-2 text-right text-sm font-semibold text-slate-800">{item.total.toLocaleString('ru-RU')} ₽</td>
+                      <td className="px-3 py-2 text-sm text-slate-800 border border-slate-300">{item.name}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 border border-slate-300">{item.category}</td>
+                      <td className="px-3 py-2 text-center text-sm text-slate-800 border border-slate-300">{item.quantity}</td>
+                      <td className="px-3 py-2 text-right text-sm text-slate-700 border border-slate-300">{item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
+                      <td className="px-3 py-2 text-right text-sm font-semibold text-slate-800 border border-slate-300">{item.total.toLocaleString('ru-RU')} ₽</td>
                     </tr>
                   ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-center text-sm text-slate-400">Нет данных</td>
+                  <td colSpan={5} className="px-3 py-4 text-center text-sm text-slate-400 border border-slate-300">Нет данных</td>
                 </tr>
               )}
             </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-slate-300 bg-slate-50">
+                <td className="px-3 py-2 text-left text-sm font-semibold text-slate-800 border border-slate-300">ИТОГО</td>
+                <td colSpan={3} className="border border-slate-300"></td>
+                <td className="px-3 py-2 text-right text-sm font-semibold text-blue-600 border border-slate-300">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
-        <table className="w-full border-collapse">
-          <tfoot>
-            <tr className="border-t border-slate-300">
-              <td className="px-3 py-2 text-left text-sm font-semibold text-slate-800">ИТОГО</td>
-              <td colSpan={3}></td>
-              <td className="px-3 py-2 text-right text-sm font-semibold text-blue-600">{sheet.totalAmount.toLocaleString('ru-RU')} ₽</td>
-            </tr>
-          </tfoot>
-        </table>
       </div>
     </div>
   );
