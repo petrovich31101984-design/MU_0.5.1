@@ -3234,6 +3234,24 @@ function ChatPage({ data }: { data: ReturnType<typeof useData> }) {
   const [selectedChat, setSelectedChat] = useState<string>(employees[0]?.id || '');
   const [newMessage, setNewMessage] = useState('');
 
+  // Функция для форматирования ФИО в формате "Фамилия И.О."
+  const formatFullName = (fullName: string) => {
+    const parts = fullName.trim().split(' ');
+    if (parts.length === 0) return '';
+    if (parts.length === 1) return parts[0];
+    
+    const lastName = parts[0]; // Фамилия полностью
+    const initials = parts.slice(1).map(p => p[0] + '.').join(''); // И.О.
+    return `${lastName} ${initials}`;
+  };
+
+  // Функция для получения статуса сотрудника
+  const getEmployeeStatus = (emp: any) => {
+    if (emp.status === 'Уволен') return { text: 'Уволен', color: 'bg-red-100 text-red-700' };
+    if (emp.blocked) return { text: 'Не активен', color: 'bg-slate-100 text-slate-700' };
+    return { text: 'Активен', color: 'bg-emerald-100 text-emerald-700' };
+  };
+
   const chatWith = chatMessages.filter(m =>
     (m.fromId === selectedChat && m.toId === 'MGR') || (m.fromId === 'MGR' && m.toId === selectedChat)
   ).sort((a, b) => a.date.localeCompare(b.date));
@@ -3262,18 +3280,25 @@ function ChatPage({ data }: { data: ReturnType<typeof useData> }) {
             <h3 className="font-bold text-slate-800 text-sm">Диалоги</h3>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {employees.filter(e => e.status === 'Активен').map(emp => (
-              <button key={emp.id} onClick={() => setSelectedChat(emp.id)}
-                className={`w-full p-4 flex items-center gap-3 text-left border-b border-slate-100 ${
-                  selectedChat === emp.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : 'hover:bg-slate-50'
-                }`}>
-                <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-sm font-bold text-white">{emp.fullName[0]}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-slate-800 truncate">{emp.fullName}</div>
-                  <div className="text-xs text-slate-500">{emp.position}</div>
-                </div>
-              </button>
-            ))}
+            {employees.map(emp => {
+              const status = getEmployeeStatus(emp);
+              return (
+                <button key={emp.id} onClick={() => setSelectedChat(emp.id)}
+                  className={`w-full p-4 flex items-center gap-3 text-left border-b border-slate-100 ${
+                    selectedChat === emp.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : 'hover:bg-slate-50'
+                  }`}>
+                  <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-sm font-bold text-white">{emp.fullName[0]}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-800 truncate">{formatFullName(emp.fullName)}</div>
+                    <div className="mt-1">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${status.color}`}>
+                        {status.text}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -3283,8 +3308,21 @@ function ChatPage({ data }: { data: ReturnType<typeof useData> }) {
               {employees.find(e => e.id === selectedChat)?.fullName[0] || '?'}
             </div>
             <div>
-              <div className="font-medium text-slate-800">{employees.find(e => e.id === selectedChat)?.fullName}</div>
-              <div className="text-xs text-slate-500">{employees.find(e => e.id === selectedChat)?.position}</div>
+              <div className="font-medium text-slate-800">
+                {employees.find(e => e.id === selectedChat) ? formatFullName(employees.find(e => e.id === selectedChat)!.fullName) : ''}
+              </div>
+              <div className="mt-1">
+                {(() => {
+                  const emp = employees.find(e => e.id === selectedChat);
+                  if (!emp) return null;
+                  const status = getEmployeeStatus(emp);
+                  return (
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${status.color}`}>
+                      {status.text}
+                    </span>
+                  );
+                })()}
+              </div>
             </div>
           </div>
 
