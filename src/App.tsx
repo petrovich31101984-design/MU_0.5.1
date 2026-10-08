@@ -3311,18 +3311,7 @@ function ChatPage({ data }: { data: ReturnType<typeof useData> }) {
               <div className="font-medium text-slate-800">
                 {employees.find(e => e.id === selectedChat) ? formatFullName(employees.find(e => e.id === selectedChat)!.fullName) : ''}
               </div>
-              <div className="mt-1">
-                {(() => {
-                  const emp = employees.find(e => e.id === selectedChat);
-                  if (!emp) return null;
-                  const status = getEmployeeStatus(emp);
-                  return (
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${status.color}`}>
-                      {status.text}
-                    </span>
-                  );
-                })()}
-              </div>
+              <div className="text-xs text-slate-500">{employees.find(e => e.id === selectedChat)?.position}</div>
             </div>
           </div>
 
