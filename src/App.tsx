@@ -1805,17 +1805,53 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
       )}
 
       {viewingItem && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-2xl shadow-2xl">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-800">📋 Карточка позиции</h3>
-              <button onClick={() => setViewingItem(null)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
-            </div>
-            <div className="p-6 space-y-4">
+        <ViewNomenclatureCardModal
+          item={viewingItem}
+          onClose={() => setViewingItem(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ============ МОДАЛЬНОЕ ОКНО ПРОСМОТРА КАРТОЧКИ НОМЕНКЛАТУРЫ ============
+function ViewNomenclatureCardModal({
+  item,
+  onClose
+}: {
+  item: gs.Nomenclature;
+  onClose: () => void;
+}) {
+  const [priceHistory, setPriceHistory] = useState<gs.PriceHistory[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    const loadPriceHistory = async () => {
+      setLoadingHistory(true);
+      try {
+        const history = await gs.getPriceHistory(item.id);
+        setPriceHistory(history);
+      } catch (err) {
+        console.error('Ошибка загрузки истории цен:', err);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+    loadPriceHistory();
+  }, [item.id]);
+
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
+          <h3 className="text-lg font-bold text-slate-800">📋 Карточка позиции</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+        </div>
+        <div className="p-6 space-y-4">
               <div>
                 <label className="text-sm text-slate-600 mb-1 block">Наименование</label>
                 <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-semibold">
-                  {viewingItem.name}
+                  {item.name}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -1823,68 +1859,86 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
                   <label className="text-sm text-slate-600 mb-1 block">Категория</label>
                   <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg">
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      viewingItem.category === 'ЛС ПКУ' ? 'bg-red-100 text-red-700' :
-                      viewingItem.category === 'ЛС' ? 'bg-green-100 text-green-700' :
-                      viewingItem.category === 'Расходный материал' ? 'bg-blue-100 text-blue-700' :
-                      viewingItem.category === 'Оборудование' ? 'bg-purple-100 text-purple-700' :
+                      item.category === 'ЛС ПКУ' ? 'bg-red-100 text-red-700' :
+                      item.category === 'ЛС' ? 'bg-green-100 text-green-700' :
+                      item.category === 'Расходный материал' ? 'bg-blue-100 text-blue-700' :
+                      item.category === 'Оборудование' ? 'bg-purple-100 text-purple-700' :
                       'bg-slate-100 text-slate-700'
-                    }`}>{viewingItem.category}</span>
+                    }`}>{item.category}</span>
                   </div>
                 </div>
                 <div>
                   <label className="text-sm text-slate-600 mb-1 block">Единица измерения</label>
                   <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
-                    {viewingItem.unit}
+                    {item.unit}
                   </div>
                 </div>
               </div>
               <div>
                 <label className="text-sm text-slate-600 mb-1 block">Производитель</label>
                 <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
-                  {viewingItem.manufacturer || 'Не указан'}
+                  {item.manufacturer || 'Не указан'}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-slate-600 mb-1 block">Количество в упаковке</label>
-                  <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-semibold">
-                    {viewingItem.packageQuantity || 1}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-600 mb-1 block">Статус</label>
-                  <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg">
-                    <span className={`px-2 py-1 rounded-full text-xs ${viewingItem.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                      {viewingItem.active ? 'Активна' : 'Неактивна'}
-                    </span>
-                  </div>
+              <div>
+                <label className="text-sm text-slate-600 mb-1 block">Количество в упаковке</label>
+                <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-semibold">
+                  {item.packageQuantity || 1}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-slate-600 mb-1 block">Цена за упаковку</label>
                   <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-emerald-600 font-semibold">
-                    {(viewingItem.currentPrice * (viewingItem.packageQuantity || 1)).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
+                    {(item.currentPrice * (item.packageQuantity || 1)).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
                   </div>
                 </div>
                 <div>
                   <label className="text-sm text-slate-600 mb-1 block">Цена за единицу</label>
                   <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-blue-600 font-semibold">
-                    {viewingItem.currentPrice.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
+                    {item.currentPrice.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
                   </div>
                 </div>
               </div>
+
+              {/* История изменений цен */}
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-slate-700 mb-3">📊 Изменение цены</h4>
+                {loadingHistory ? (
+                  <div className="text-center py-4 text-slate-500">Загрузка истории...</div>
+                ) : priceHistory.length === 0 ? (
+                  <div className="text-center py-4 text-slate-400 text-sm">История изменений отсутствует</div>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {priceHistory.map((record, index) => (
+                      <div key={record.id || index} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold text-slate-800">
+                            {record.price.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {new Date(record.date).toLocaleDateString('ru-RU')} • {record.changedBy}
+                          </div>
+                        </div>
+                        {index === 0 && (
+                          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full font-semibold">
+                            Текущая
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="p-6 border-t border-slate-200 flex justify-end">
-              <button onClick={() => setViewingItem(null)} className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg text-white font-medium">
+              <button onClick={onClose} className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg text-white font-medium">
                 Закрыть
               </button>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      );
 }
 
 // ============ ПРИХОД К СОТРУДНИКУ ============

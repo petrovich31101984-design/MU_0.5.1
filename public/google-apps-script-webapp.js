@@ -34,6 +34,8 @@ function doGet(e) {
         return jsonResponse(getNomenclatureData());
       case 'getPrices':
         return jsonResponse(getPricesData());
+      case 'getPriceHistory':
+        return jsonResponse(getPricesData());
       case 'getArrivals':
         return jsonResponse(getArrivalsData());
       case 'getExpenses':

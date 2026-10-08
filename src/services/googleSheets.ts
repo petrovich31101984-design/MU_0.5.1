@@ -502,3 +502,25 @@ export async function addNomenclature(item: Partial<Nomenclature>): Promise<void
 export async function deleteNomenclature(id: string): Promise<void> {
   await postData('deleteNomenclature', { id });
 }
+
+export interface PriceHistory {
+  id: string;
+  nomenclatureId: string;
+  price: number;
+  date: string;
+  changedBy: string;
+}
+
+export async function getPriceHistory(nomenclatureId: string): Promise<PriceHistory[]> {
+  const data = await fetchData('getPriceHistory');
+  return data
+    .filter((row: any) => row['Номенклатура_ID'] === nomenclatureId)
+    .map((row: any) => ({
+      id: row['ID'] || '',
+      nomenclatureId: row['Номенклатура_ID'] || '',
+      price: parseFloat(row['Цена за ед. (₽)'] || '0'),
+      date: row['Дата начала'] || '',
+      changedBy: row['Кем изменено'] || '',
+    }))
+    .sort((a: PriceHistory, b: PriceHistory) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
