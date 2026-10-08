@@ -3569,15 +3569,15 @@ function ReportsPage({ data }: { data: ReturnType<typeof useData> }) {
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-500">Расход</div>
-          <div className="text-xl font-bold text-blue-600 mt-1">{totals.expense.toLocaleString('ru-RU')} ₽</div>
+          <div className="text-xl font-bold text-red-600 mt-1">{totals.expense.toLocaleString('ru-RU')} ₽</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-500">Остаток</div>
-          <div className="text-xl font-bold text-purple-600 mt-1">{totals.balance.toLocaleString('ru-RU')} ₽</div>
+          <div className="text-xl font-bold text-blue-600 mt-1">{totals.balance.toLocaleString('ru-RU')} ₽</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-500">Листов расхода</div>
-          <div className="text-xl font-bold text-slate-800 mt-1">{totals.expenseSheetsCount}</div>
+          <div className="text-xl font-bold text-orange-600 mt-1">{totals.expenseSheetsCount}</div>
         </div>
       </div>
 
@@ -3605,21 +3605,21 @@ function ReportsPage({ data }: { data: ReturnType<typeof useData> }) {
                   <div className="text-xs text-slate-500">{row.emp.position}</div>
                 </td>
                 <td className="px-5 py-3 text-right text-sm text-emerald-600">{row.arrival.toLocaleString('ru-RU')} ₽</td>
-                <td className="px-5 py-3 text-right text-sm text-blue-600">{row.expense.toLocaleString('ru-RU')} ₽</td>
-                <td className={`px-5 py-3 text-right text-sm font-semibold ${row.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <td className="px-5 py-3 text-right text-sm text-red-600">{row.expense.toLocaleString('ru-RU')} ₽</td>
+                <td className="px-5 py-3 text-right text-sm font-semibold text-blue-600">
                   {row.balance.toLocaleString('ru-RU')} ₽
                 </td>
-                <td className="px-5 py-3 text-right text-sm text-slate-800">{row.expenseSheetsCount}</td>
+                <td className="px-5 py-3 text-right text-sm text-orange-600">{row.expenseSheetsCount}</td>
               </tr>
             ))}
             <tr className="bg-slate-50 font-bold">
               <td className="px-5 py-3" colSpan={2}><span className="text-sm text-slate-800">ИТОГО</span></td>
               <td className="px-5 py-3 text-right text-sm text-emerald-600">{totals.arrival.toLocaleString('ru-RU')} ₽</td>
-              <td className="px-5 py-3 text-right text-sm text-blue-600">{totals.expense.toLocaleString('ru-RU')} ₽</td>
-              <td className={`px-5 py-3 text-right text-sm ${totals.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              <td className="px-5 py-3 text-right text-sm text-red-600">{totals.expense.toLocaleString('ru-RU')} ₽</td>
+              <td className="px-5 py-3 text-right text-sm font-semibold text-blue-600">
                 {totals.balance.toLocaleString('ru-RU')} ₽
               </td>
-              <td className="px-5 py-3 text-right text-sm text-slate-800">{totals.expenseSheetsCount}</td>
+              <td className="px-5 py-3 text-right text-sm text-orange-600">{totals.expenseSheetsCount}</td>
             </tr>
           </tbody>
         </table>
