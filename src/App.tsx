@@ -573,7 +573,7 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
             Активных сотрудников: <span className="font-semibold text-emerald-600">{activeEmployees.length}</span>
           </div>
         </div>
-        <div className="overflow-x-auto" style={{ maxHeight: '400px' }}>
+        <div className="overflow-y-auto" style={{ maxHeight: '400px' }}>
           <table className="w-full">
             <thead className="sticky top-0 bg-slate-50 z-10">
               <tr className="border-b border-slate-200 text-left bg-slate-50">
