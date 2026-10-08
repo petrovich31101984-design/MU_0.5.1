@@ -593,7 +593,6 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
                   if (a.status !== 'Активен' && b.status === 'Активен') return 1;
                   return 0;
                 })
-                .slice(0, 5)
                 .map(emp => {
                   const arr = getArrival(emp.id, lastMonth);
                   const exp = getExpenseValue(emp.id, lastMonth);
