@@ -3698,10 +3698,7 @@ function ReportsPage({ data }: { data: ReturnType<typeof useData> }) {
   const reportData = employees.filter(e => e.status !== 'Уволен').map(emp => {
     const expenseSheetsCount = expenseSheets.filter(s => s.employeeId === emp.id && s.month === selectedMonth && !s.archived).length;
     const arrival = arrivals.filter(a => a.employeeId === emp.id && a.month === selectedMonth).reduce((s, a) => s + a.amount, 0);
-    const expense = expenses.filter(e => e.employeeId === emp.id && e.month === selectedMonth).reduce((s, e) => {
-      const nom = nomenclature.find(n => n.id === e.nomenclatureId);
-      return s + (nom ? nom.currentPrice * e.quantity : 0);
-    }, 0);
+    const expense = expenseSheets.filter(s => s.employeeId === emp.id && s.month === selectedMonth && !s.archived).reduce((s, sheet) => s + sheet.totalAmount, 0);
     return { emp, expenseSheetsCount, arrival, expense, balance: arrival - expense };
   });
 
