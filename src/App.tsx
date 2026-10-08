@@ -3510,32 +3510,38 @@ function ChatPage({ data }: { data: ReturnType<typeof useData> }) {
 
 // ============ ОТЧЁТЫ ============
 function ReportsPage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, arrivals, expenses, nomenclature } = data;
+  const { employees, arrivals, expenses, nomenclature, expenseSheets } = data;
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const d = new Date(); d.setMonth(d.getMonth() - 1);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 
   const reportData = employees.filter(e => e.status !== 'Уволен').map(emp => {
-    const calls = new Set(expenses.filter(e => e.employeeId === emp.id && e.month === selectedMonth).map(e => e.callId)).size;
+    const expenseSheetsCount = expenseSheets.filter(s => s.employeeId === emp.id && s.month === selectedMonth && !s.archived).length;
     const arrival = arrivals.filter(a => a.employeeId === emp.id && a.month === selectedMonth).reduce((s, a) => s + a.amount, 0);
     const expense = expenses.filter(e => e.employeeId === emp.id && e.month === selectedMonth).reduce((s, e) => {
       const nom = nomenclature.find(n => n.id === e.nomenclatureId);
       return s + (nom ? nom.currentPrice * e.quantity : 0);
     }, 0);
-    return { emp, calls, arrival, expense, balance: arrival - expense };
+    return { emp, expenseSheetsCount, arrival, expense, balance: arrival - expense };
   });
 
   const totals = {
-    calls: reportData.reduce((s, r) => s + r.calls, 0),
+    expenseSheetsCount: reportData.reduce((s, r) => s + r.expenseSheetsCount, 0),
     arrival: reportData.reduce((s, r) => s + r.arrival, 0),
     expense: reportData.reduce((s, r) => s + r.expense, 0),
     balance: reportData.reduce((s, r) => s + r.balance, 0),
   };
 
+  // Форматирование даты в ММ.ГГ
+  const formatMonthYear = (monthStr: string) => {
+    const [year, month] = monthStr.split('-');
+    return `${month}.${year.slice(-2)}`;
+  };
+
   const exportCSV = () => {
-    const headers = ['ФИО', 'Должность', 'Вызовы', 'Приход (₽)', 'Расход (₽)', 'Остаток (₽)'];
-    const rows = reportData.map(r => [r.emp.fullName, r.emp.position, r.calls, r.arrival, r.expense, r.balance]);
+    const headers = ['ФИО', 'Должность', 'Приход (₽)', 'Расход (₽)', 'Остаток (₽)', 'Листы расхода'];
+    const rows = reportData.map(r => [r.emp.fullName, r.emp.position, r.arrival, r.expense, r.balance, r.expenseSheetsCount]);
     const csv = [headers, ...rows].map(row => row.join(';')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -3570,24 +3576,24 @@ function ReportsPage({ data }: { data: ReturnType<typeof useData> }) {
           <div className="text-xl font-bold text-purple-600 mt-1">{totals.balance.toLocaleString('ru-RU')} ₽</div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-          <div className="text-xs text-slate-500">Вызовов</div>
-          <div className="text-xl font-bold text-slate-800 mt-1">{totals.calls}</div>
+          <div className="text-xs text-slate-500">Листов расхода</div>
+          <div className="text-xl font-bold text-slate-800 mt-1">{totals.expenseSheetsCount}</div>
         </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
         <div className="p-5 border-b border-slate-200 bg-slate-50">
-          <h3 className="text-lg font-bold text-slate-800">📋 Отчёт за {selectedMonth}</h3>
+          <h3 className="text-lg font-bold text-slate-800">📋 Отчёт за {formatMonthYear(selectedMonth)}</h3>
         </div>
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-200 text-left bg-slate-50">
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">№</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">ФИО</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Вызовы</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Приход</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Расход</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Остаток</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Листы расхода</th>
             </tr>
           </thead>
           <tbody>
@@ -3598,22 +3604,22 @@ function ReportsPage({ data }: { data: ReturnType<typeof useData> }) {
                   <div className="text-sm font-medium text-slate-800">{row.emp.fullName}</div>
                   <div className="text-xs text-slate-500">{row.emp.position}</div>
                 </td>
-                <td className="px-5 py-3 text-right text-sm text-slate-800">{row.calls}</td>
                 <td className="px-5 py-3 text-right text-sm text-emerald-600">{row.arrival.toLocaleString('ru-RU')} ₽</td>
                 <td className="px-5 py-3 text-right text-sm text-blue-600">{row.expense.toLocaleString('ru-RU')} ₽</td>
                 <td className={`px-5 py-3 text-right text-sm font-semibold ${row.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                   {row.balance.toLocaleString('ru-RU')} ₽
                 </td>
+                <td className="px-5 py-3 text-right text-sm text-slate-800">{row.expenseSheetsCount}</td>
               </tr>
             ))}
             <tr className="bg-slate-50 font-bold">
               <td className="px-5 py-3" colSpan={2}><span className="text-sm text-slate-800">ИТОГО</span></td>
-              <td className="px-5 py-3 text-right text-sm text-slate-800">{totals.calls}</td>
               <td className="px-5 py-3 text-right text-sm text-emerald-600">{totals.arrival.toLocaleString('ru-RU')} ₽</td>
               <td className="px-5 py-3 text-right text-sm text-blue-600">{totals.expense.toLocaleString('ru-RU')} ₽</td>
               <td className={`px-5 py-3 text-right text-sm ${totals.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                 {totals.balance.toLocaleString('ru-RU')} ₽
               </td>
+              <td className="px-5 py-3 text-right text-sm text-slate-800">{totals.expenseSheetsCount}</td>
             </tr>
           </tbody>
         </table>
