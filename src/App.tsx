@@ -3690,7 +3690,7 @@ function ChatPage({ data }: { data: ReturnType<typeof useData> }) {
 function ReportsPage({ data }: { data: ReturnType<typeof useData> }) {
   const { employees, arrivals, expenses, nomenclature, expenseSheets } = data;
   const [selectedMonth, setSelectedMonth] = useState(() => {
-    const d = new Date(); d.setMonth(d.getMonth() - 1);
+    const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 
