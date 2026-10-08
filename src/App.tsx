@@ -406,12 +406,16 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
   const getExpenseValue = (empId: string, month: string) => expenseSheets.filter(s => s.employeeId === empId && s.month === month && !s.archived).reduce((s, sheet) => s + sheet.totalAmount, 0);
   const getExpenseCount = (empId: string, month: string) => expenseSheets.filter(s => s.employeeId === empId && s.month === month && !s.archived).length;
 
+  // Расчеты за ВСЁ время (для карточки "Остатки на руках")
+  const getArrivalAllTime = (empId: string) => arrivals.filter(a => a.employeeId === empId).reduce((s, a) => s + a.amount, 0);
+  const getExpenseValueAllTime = (empId: string) => expenseSheets.filter(s => s.employeeId === empId && !s.archived).reduce((s, sheet) => s + sheet.totalAmount, 0);
+
   const totalArrivalLastMonth = activeEmployees.reduce((s, e) => s + getArrival(e.id, lastMonth), 0);
   const totalExpenseLastMonth = activeEmployees.reduce((s, e) => s + getExpenseValue(e.id, lastMonth), 0);
   const totalExpenseCountLastMonth = activeEmployees.reduce((s, e) => s + getExpenseCount(e.id, lastMonth), 0);
   
-  // Остаток на начало текущего месяца = Приход за прошлый месяц - Расход за прошлый месяц
-  const balanceStartCurrentMonth = totalArrivalLastMonth - totalExpenseLastMonth;
+  // Остатки на руках = Все приходы за всё время - Все расходы за всё время
+  const totalBalanceOnHand = activeEmployees.reduce((s, e) => s + (getArrivalAllTime(e.id) - getExpenseValueAllTime(e.id)), 0);
   
   const pendingReturns = returns.filter(r => r.status === 'Новый').length;
 
@@ -449,9 +453,9 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
         {/* Остатки на руках */}
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
           <div className="text-sm italic text-slate-600 mb-2">Остатки на руках</div>
-          <div className="text-2xl font-bold text-blue-600 mb-1">{balanceStartCurrentMonth.toLocaleString('ru-RU')} ₽</div>
+          <div className="text-2xl font-bold text-blue-600 mb-1">{totalBalanceOnHand.toLocaleString('ru-RU')} ₽</div>
           <div className="text-xs text-slate-500">
-            {now.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
+            Текущий остаток
           </div>
         </div>
         {/* Листов расхода за предыдущий месяц */}
@@ -561,7 +565,7 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
         <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-800">Сотрудники — общая сводка</h3>
           <div className="text-sm text-slate-600">
-            Активных сотрудников: <span className="font-semibold text-emerald-600">{activeEmployees.length}</span>
+            За {currentMonthName}: Активных сотрудников: <span className="font-semibold text-emerald-600">{activeEmployees.length}</span>
           </div>
         </div>
         <div className="overflow-x-auto" style={{ maxHeight: '400px' }}>
@@ -586,10 +590,10 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
                 })
                 .slice(0, 5)
                 .map(emp => {
-                  const arr = getArrival(emp.id, lastMonth);
-                  const exp = getExpenseValue(emp.id, lastMonth);
+                  const arr = getArrival(emp.id, currentMonth);
+                  const exp = getExpenseValue(emp.id, currentMonth);
                   const bal = arr - exp;
-                  const expenseCount = getExpenseCount(emp.id, lastMonth);
+                  const expenseCount = getExpenseCount(emp.id, currentMonth);
                   return (
                   <tr key={emp.id} className="border-b border-slate-100 hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer">
                     <td className="px-5 py-3">
