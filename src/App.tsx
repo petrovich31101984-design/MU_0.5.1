@@ -2688,7 +2688,7 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
                               Дата найма: {new Date(emp.hireDate).toLocaleDateString('ru-RU')}
                             </div>
                           )}
-                          <div className="text-xs text-red-600 mt-1 font-semibold">
+                          <div className="text-xs text-red-600 mt-1">
                             Дата увольнения: {new Date().toLocaleDateString('ru-RU')}
                           </div>
                         </div>
