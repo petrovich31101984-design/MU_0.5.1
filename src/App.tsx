@@ -386,7 +386,7 @@ export default function App() {
 
 // ============ DASHBOARD ============
 function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, nomenclature, arrivals, expenses, returns } = data;
+  const { employees, nomenclature, arrivals, expenseSheets, returns } = data;
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   
@@ -403,11 +403,8 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
 
   // Расчеты за предыдущий месяц
   const getArrival = (empId: string, month: string) => arrivals.filter(a => a.employeeId === empId && a.month === month).reduce((s, a) => s + a.amount, 0);
-  const getExpenseValue = (empId: string, month: string) => expenses.filter(e => e.employeeId === empId && e.month === month).reduce((s, e) => {
-    const nom = nomenclature.find(n => n.id === e.nomenclatureId);
-    return s + (nom ? nom.currentPrice * e.quantity : 0);
-  }, 0);
-  const getExpenseCount = (empId: string, month: string) => expenses.filter(e => e.employeeId === empId && e.month === month).length;
+  const getExpenseValue = (empId: string, month: string) => expenseSheets.filter(s => s.employeeId === empId && s.month === month && !s.archived).reduce((s, sheet) => s + sheet.totalAmount, 0);
+  const getExpenseCount = (empId: string, month: string) => expenseSheets.filter(s => s.employeeId === empId && s.month === month && !s.archived).length;
 
   const totalArrivalLastMonth = activeEmployees.reduce((s, e) => s + getArrival(e.id, lastMonth), 0);
   const totalExpenseLastMonth = activeEmployees.reduce((s, e) => s + getExpenseValue(e.id, lastMonth), 0);
