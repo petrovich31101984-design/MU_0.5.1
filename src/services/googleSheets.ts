@@ -144,6 +144,7 @@ export interface Employee {
   phone: string;
   lastActivity: string;
   note: string;
+  shiftOpen: boolean;
 }
 
 export interface Nomenclature {
@@ -274,6 +275,7 @@ export async function getEmployees(): Promise<Employee[]> {
     phone: row['Телефон'] || '',
     lastActivity: row['Последний вход'] || '',
     note: row['Примечание'] || '',
+    shiftOpen: row['Смена открыта'] === 'ДА',
   }));
 }
 
@@ -389,6 +391,10 @@ export async function addEmployee(employee: Partial<Employee>): Promise<void> {
 
 export async function updateEmployee(id: string, data: Partial<Employee>): Promise<void> {
   await postData('updateEmployee', { id, data });
+}
+
+export async function updateEmployeeShift(id: string, shiftOpen: boolean): Promise<void> {
+  await postData('updateEmployeeShift', { id, shiftOpen });
 }
 
 export async function deleteEmployee(id: string): Promise<void> {

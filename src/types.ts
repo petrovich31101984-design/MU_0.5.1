@@ -15,6 +15,7 @@ export interface Employee {
   phone: string;
   lastActivity: string;
   note: string;
+  shiftOpen: boolean; // true если смена открыта
 }
 
 export interface NomenclatureItem {

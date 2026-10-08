@@ -70,6 +70,9 @@ function doPost(e) {
       case 'updateEmployee':
         updateEmployeeRow(data.data.id, data.data.data);
         return jsonResponse({ success: true });
+      case 'updateEmployeeShift':
+        updateEmployeeShiftRow(data.data.id, data.data.shiftOpen);
+        return jsonResponse({ success: true });
       case 'deleteEmployee':
         Logger.log('Вызываем deleteEmployeeRow для ID: ' + data.data.id);
         deleteEmployeeRow(data.data.id);
@@ -238,7 +241,8 @@ function addEmployeeRow(data) {
     data.email || '',
     new Date(),
     '',
-    data.note || ''
+    data.note || '',
+    data.shiftOpen ? 'ДА' : 'НЕТ'
   ]);
   writeAudit('Сотрудники', data.id, 'Создание', '', 'Сотрудник: ' + data.fullName);
 }
@@ -256,11 +260,28 @@ function updateEmployeeRow(id, data) {
       if (data.fullName !== undefined) sheet.getRange(i + 1, 3).setValue(data.fullName);
       if (data.position !== undefined) sheet.getRange(i + 1, 6).setValue(data.position);
       if (data.phone !== undefined) sheet.getRange(i + 1, 10).setValue(data.phone);
+      if (data.shiftOpen !== undefined) sheet.getRange(i + 1, 15).setValue(data.shiftOpen ? 'ДА' : 'НЕТ');
       break;
     }
   }
   
   writeAudit('Сотрудники', id, 'Изменение', '', JSON.stringify(data));
+}
+
+function updateEmployeeShiftRow(id, shiftOpen) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
+  const allData = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      sheet.getRange(i + 1, 15).setValue(shiftOpen ? 'ДА' : 'НЕТ');
+      // Автоматически меняем статус в зависимости от смены
+      const newStatus = shiftOpen ? 'Активен' : 'Неактивен';
+      sheet.getRange(i + 1, 5).setValue(newStatus);
+      writeAudit('Сотрудники', id, 'Изменение смены', '', shiftOpen ? 'Смена открыта' : 'Смена закрыта');
+      break;
+    }
+  }
 }
 
 function deleteEmployeeRow(id) {
@@ -709,7 +730,7 @@ function createSheet_Employees(ss) {
   let sheet = ss.getSheetByName('Сотрудники');
   if (!sheet) sheet = ss.insertSheet('Сотрудники');
   
-  const headers = ['ID', 'Персональный номер', 'ФИО', 'Пароль (хэш)', 'Статус', 'Должность', 'Дата найма', 'Дата увольнения', 'Заблокирован', 'Телефон', 'Email', 'Дата регистрации', 'Последний вход', 'Примечание'];
+  const headers = ['ID', 'Персональный номер', 'ФИО', 'Пароль (хэш)', 'Статус', 'Должность', 'Дата найма', 'Дата увольнения', 'Заблокирован', 'Телефон', 'Email', 'Дата регистрации', 'Последний вход', 'Примечание', 'Смена открыта'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   formatHeader(sheet, headers.length);
   
@@ -721,6 +742,8 @@ function createSheet_Employees(ss) {
   sheet.getRange('E2:E1000').setDataValidation(statusRule);
   
   const boolRule = SpreadsheetApp.newDataValidation().requireValueInList(['ДА', 'НЕТ']).build();
+  sheet.getRange('I2:I1000').setDataValidation(boolRule);
+  sheet.getRange('O2:O1000').setDataValidation(boolRule);
   sheet.getRange('I2:I1000').setDataValidation(boolRule);
 }
 

@@ -719,6 +719,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
       phone: form.phone,
       lastActivity: '',
       note: '',
+      shiftOpen: false,
     };
     
     // Добавляем в локальное состояние
@@ -750,6 +751,22 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
         alert('Ошибка при блокировке сотрудника. Попробуйте ещё раз.');
       });
     }
+  };
+
+  // 🟢 Открытие/закрытие смены сотрудника
+  const handleToggleShift = async (id: string, open: boolean) => {
+    const emp = employees.find(e => e.id === id);
+    if (!emp) return;
+    
+    // Обновляем локальное состояние
+    const updatedEmployee = { ...emp, shiftOpen: open };
+    setEmployees(employees.map(e => e.id === id ? updatedEmployee : e));
+    
+    // Отправляем в Google Sheets в фоне
+    gs.updateEmployeeShift(id, open).catch(err => {
+      console.error('Ошибка изменения статуса смены:', err);
+      alert('Ошибка при изменении статуса смены. Попробуйте ещё раз.');
+    });
   };
 
   // 🚫 Увольнение — сотрудник уходит в архив, персональный номер освобождается
@@ -824,13 +841,10 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                     <div className="flex flex-wrap gap-1">
                       {emp.blocked ? (
                         <span className="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-700">🔒 Заблокирован</span>
+                      ) : emp.shiftOpen ? (
+                        <span className="px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">🟢 Активен (смена открыта)</span>
                       ) : (
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          emp.status === 'Активен' ? 'bg-emerald-100 text-emerald-700' :
-                          emp.status === 'Отпуск' ? 'bg-yellow-100 text-yellow-700' :
-                          emp.status === 'Уволен' ? 'bg-red-100 text-red-700' :
-                          'bg-slate-100 text-slate-600'
-                        }`}>{emp.status}</span>
+                        <span className="px-2 py-1 rounded-full text-xs bg-slate-100 text-slate-600">⚪ Не активен (смена закрыта)</span>
                       )}
                     </div>
                   </td>
@@ -857,6 +871,23 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
                       >
                         ✏️
                       </button>
+                      {emp.shiftOpen ? (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleToggleShift(emp.id, false); }}
+                          className="text-red-600 hover:text-red-800 text-lg"
+                          title="🔴 Закрыть смену"
+                        >
+                          🔴
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleToggleShift(emp.id, true); }}
+                          className="text-green-600 hover:text-green-800 text-lg"
+                          title="🟢 Открыть смену"
+                        >
+                          🟢
+                        </button>
+                      )}
                       {emp.blocked ? (
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleToggleBlock(emp.id, false); }}
