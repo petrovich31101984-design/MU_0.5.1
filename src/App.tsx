@@ -1321,7 +1321,8 @@ function EditNomenclatureModal({
       return;
     }
     
-    if (form.pricePerPackage <= 0) {
+    // Для категории "Оборудование" цена не обязательна
+    if (form.category !== 'Оборудование' && form.pricePerPackage <= 0) {
       setError('Цена за упаковку должна быть больше 0');
       return;
     }
@@ -1442,7 +1443,7 @@ function EditNomenclatureModal({
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
           <button 
             onClick={handleSubmit} 
-            disabled={!form.name || form.pricePerPackage <= 0 || form.packageQuantity <= 0}
+            disabled={!form.name || (form.category !== 'Оборудование' && form.pricePerPackage <= 0) || form.packageQuantity <= 0}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium"
           >
             💾 Сохранить
@@ -1482,7 +1483,8 @@ function AddNomenclatureModal({
       return;
     }
     
-    if (form.pricePerPackage <= 0) {
+    // Для категории "Оборудование" цена не обязательна
+    if (form.category !== 'Оборудование' && form.pricePerPackage <= 0) {
       setError('Цена за упаковку должна быть больше 0');
       return;
     }
@@ -1604,7 +1606,7 @@ function AddNomenclatureModal({
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
           <button 
             onClick={handleSubmit} 
-            disabled={!form.name || form.pricePerPackage <= 0 || form.packageQuantity <= 0}
+            disabled={!form.name || (form.category !== 'Оборудование' && form.pricePerPackage <= 0) || form.packageQuantity <= 0}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium"
           >
             💾 Сохранить
