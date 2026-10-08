@@ -579,10 +579,10 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
               <tr className="border-b border-slate-200 text-left bg-slate-50">
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Статус</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Приход<br /><span className="text-xs font-normal">({lastMonthNameNominative})</span></th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Расход<br /><span className="text-xs font-normal">({lastMonthNameNominative})</span></th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Остатки на руках</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Листов расхода<br /><span className="text-xs font-normal">({lastMonthNameNominative})</span></th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Приход<br /><span className="text-xs font-normal">({lastMonthNameNominative})</span></th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Расход<br /><span className="text-xs font-normal">({lastMonthNameNominative})</span></th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Остатки на руках</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Листов расхода<br /><span className="text-xs font-normal">({lastMonthNameNominative})</span></th>
               </tr>
             </thead>
             <tbody>
@@ -626,12 +626,12 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-right text-sm text-emerald-600">{arr.toLocaleString('ru-RU')} ₽</td>
-                    <td className="px-5 py-3 text-right text-sm text-red-600">{exp.toLocaleString('ru-RU')} ₽</td>
-                    <td className={`px-5 py-3 text-right text-sm font-semibold ${bal >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                    <td className="px-5 py-3 text-sm text-emerald-600">{arr.toLocaleString('ru-RU')} ₽</td>
+                    <td className="px-5 py-3 text-sm text-red-600">{exp.toLocaleString('ru-RU')} ₽</td>
+                    <td className={`px-5 py-3 text-sm font-semibold ${bal >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                       {bal.toLocaleString('ru-RU')} ₽
                     </td>
-                    <td className="px-5 py-3 text-right text-sm text-orange-600">{expenseCount}</td>
+                    <td className="px-5 py-3 text-sm text-orange-600">{expenseCount}</td>
                   </tr>
                 );
               })}
