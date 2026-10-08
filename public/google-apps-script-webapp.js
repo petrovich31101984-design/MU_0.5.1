@@ -46,6 +46,8 @@ function doGet(e) {
         return jsonResponse(getChatData());
       case 'getAuditLog':
         return jsonResponse(getAuditLogData());
+      case 'getAnnouncements':
+        return jsonResponse(getAnnouncementsData());
       default:
         return jsonResponse({ error: 'Неизвестное действие GET: ' + action });
     }
@@ -121,6 +123,9 @@ function doPost(e) {
         return jsonResponse({ success: true });
       case 'createTestExpenseSheets':
         createTestExpenseSheetsRow(data.data);
+        return jsonResponse({ success: true });
+      case 'createAnnouncement':
+        createAnnouncementRow(data.data);
         return jsonResponse({ success: true });
       case 'setupDatabase':
         setupDatabase();
@@ -216,6 +221,7 @@ function getExpenseSheetsData() {
 }
 function getChatData() { return readSheetData('Чат'); }
 function getAuditLogData() { return readSheetData('Журнал изменений'); }
+function getAnnouncementsData() { return readSheetData('Объявления'); }
 
 // ==================== ЗАПИСЬ ДАННЫХ ====================
 
@@ -551,6 +557,20 @@ function addChatMessageRow(data) {
   ]);
 }
 
+function createAnnouncementRow(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Объявления');
+  sheet.appendRow([
+    data.id || '',
+    data.title || '',
+    data.text || '',
+    data.recipients ? data.recipients.join(',') : '',
+    data.createdBy || '',
+    data.date || new Date(),
+    data.active ? 'ДА' : 'НЕТ'
+  ]);
+  writeAudit('Объявления', data.id, 'Создание', '', 'Объявление: ' + data.title);
+}
+
 function addAuditLogRow(data) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Журнал изменений');
   sheet.appendRow([
@@ -703,6 +723,7 @@ function setupDatabase() {
   createSheet_AuditLog(ss);
   createSheet_Settings(ss);
   createSheet_Reports(ss);
+  createSheet_Announcements(ss);
   
   if (defaultSheet && ss.getSheets().length > 1) {
     ss.deleteSheet(defaultSheet);
@@ -892,4 +913,16 @@ function createSheet_Reports(ss) {
   const headers = ['ID', 'Тип', 'Период', 'Дата', 'Сотрудник_ID', 'ФИО', 'Вызовы', 'Приход (₽)', 'Расход (₽)', 'Остаток (₽)', 'Общий остаток (₽)', 'Статус', 'Кем сформ.', 'Примечание'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   formatHeader(sheet, headers.length);
+}
+
+function createSheet_Announcements(ss) {
+  let sheet = ss.getSheetByName('Объявления');
+  if (!sheet) sheet = ss.insertSheet('Объявления');
+  
+  const headers = ['ID', 'Заголовок', 'Текст', 'Получатели', 'Кем создано', 'Дата', 'Активно'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  formatHeader(sheet, headers.length);
+  
+  sheet.setColumnWidth(2, 300);
+  sheet.setColumnWidth(3, 500);
 }

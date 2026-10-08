@@ -234,6 +234,16 @@ export interface ChatMessage {
   priority: string;
 }
 
+export interface Announcement {
+  id: string;
+  title: string;
+  text: string;
+  recipients: string[];
+  createdBy: string;
+  date: string;
+  active: boolean;
+}
+
 export interface AuditEntry {
   id: string;
   date: string;
@@ -545,6 +555,31 @@ export async function addReturn(returnOp: Partial<ReturnOperation>): Promise<voi
 
 export async function addChatMessage(message: Partial<ChatMessage>): Promise<void> {
   await postData('addChatMessage', message);
+}
+
+export async function createAnnouncement(announcement: { title: string; text: string; recipients: string[] }): Promise<void> {
+  await postData('createAnnouncement', {
+    id: `ANN-${Date.now()}`,
+    title: announcement.title,
+    text: announcement.text,
+    recipients: announcement.recipients,
+    createdBy: 'Руководитель',
+    date: new Date().toISOString(),
+    active: true
+  });
+}
+
+export async function getAnnouncements(): Promise<Announcement[]> {
+  const data = await fetchData('getAnnouncements');
+  return data.map((row: any) => ({
+    id: row['ID'] || '',
+    title: row['Заголовок'] || '',
+    text: row['Текст'] || '',
+    recipients: row['Получатели'] ? row['Получатели'].split(',') : [],
+    createdBy: row['Кем создано'] || '',
+    date: row['Дата'] || '',
+    active: row['Активно'] === 'ДА'
+  }));
 }
 
 export async function addAuditLog(log: Partial<AuditEntry>): Promise<void> {

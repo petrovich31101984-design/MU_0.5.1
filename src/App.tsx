@@ -133,6 +133,7 @@ function useData() {
   const [expenseSheets, setExpenseSheets] = useState<gs.ExpenseSheet[]>([]);
   const [returns, setReturns] = useState<gs.ReturnOperation[]>([]);
   const [chatMessages, setChatMessages] = useState<gs.ChatMessage[]>([]);
+  const [announcements, setAnnouncements] = useState<gs.Announcement[]>([]);
   const [auditLog, setAuditLog] = useState<gs.AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,12 +142,12 @@ function useData() {
     setLoading(true);
     setError(null);
     try {
-      const [emps, noms, arrs, exps, expSheets, rets, msgs, logs] = await Promise.all([
+      const [emps, noms, arrs, exps, expSheets, rets, msgs, anns, logs] = await Promise.all([
         gs.getEmployees(), gs.getNomenclature(), gs.getArrivals(),
-        gs.getExpenses(), gs.getExpenseSheets(), gs.getReturns(), gs.getChatMessages(), gs.getAuditLog(),
+        gs.getExpenses(), gs.getExpenseSheets(), gs.getReturns(), gs.getChatMessages(), gs.getAnnouncements(), gs.getAuditLog(),
       ]);
       setEmployees(emps); setNomenclature(noms); setArrivals(arrs);
-      setExpenses(exps); setExpenseSheets(expSheets); setReturns(rets); setChatMessages(msgs); setAuditLog(logs);
+      setExpenses(exps); setExpenseSheets(expSheets); setReturns(rets); setChatMessages(msgs); setAnnouncements(anns); setAuditLog(logs);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки');
     } finally { setLoading(false); }
@@ -157,7 +158,7 @@ function useData() {
   return {
     employees, setEmployees, nomenclature, setNomenclature,
     arrivals, setArrivals, expenses, setExpenses, expenseSheets, setExpenseSheets,
-    returns, setReturns, chatMessages, setChatMessages,
+    returns, setReturns, chatMessages, setChatMessages, announcements, setAnnouncements,
     auditLog, setAuditLog, loading, error, refresh,
   };
 }
@@ -3228,11 +3229,141 @@ function ArrivalCardModal({
   );
 }
 
+// ============ КОМПОНЕНТ ОТОБРАЖЕНИЯ ОБЪЯВЛЕНИЙ ============
+function AnnouncementsPanel({ announcements }: { announcements: gs.Announcement[] }) {
+  const activeAnnouncements = announcements.filter(a => a.active);
+  
+  if (activeAnnouncements.length === 0) return null;
+
+  return (
+    <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
+      <h3 className="text-lg font-bold text-yellow-800 mb-3 flex items-center gap-2">
+        📢 Объявления
+      </h3>
+      <div className="space-y-3">
+        {activeAnnouncements.map(announcement => (
+          <div key={announcement.id} className="bg-white rounded-lg p-4 border border-yellow-200">
+            <div className="flex justify-between items-start mb-2">
+              <h4 className="font-semibold text-slate-800">{announcement.title}</h4>
+              <span className="text-xs text-slate-500">
+                {new Date(announcement.date).toLocaleDateString('ru-RU')}
+              </span>
+            </div>
+            <p className="text-sm text-slate-700 whitespace-pre-wrap">{announcement.text}</p>
+            <div className="mt-2 text-xs text-slate-500">
+              От: {announcement.createdBy}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============ МОДАЛЬНОЕ ОКНО СОЗДАНИЯ ОБЪЯВЛЕНИЯ ============
+function CreateAnnouncementModal({
+  onClose,
+  onCreate
+}: {
+  onClose: () => void;
+  onCreate: (announcement: { title: string; text: string; recipients: string[] }) => void;
+}) {
+  const [title, setTitle] = useState('');
+  const [text, setText] = useState('');
+  const [recipients, setRecipients] = useState<string[]>(['employees', 'warehouse']);
+
+  const handleSubmit = () => {
+    if (!title.trim() || !text.trim()) {
+      alert('Заполните заголовок и текст объявления');
+      return;
+    }
+    onCreate({ title, text, recipients });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-2xl shadow-2xl">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-lg font-bold text-slate-800">📢 Создать объявление</h3>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Заголовок *</label>
+            <input
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Введите заголовок объявления"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Текст объявления *</label>
+            <textarea
+              value={text}
+              onChange={e => setText(e.target.value)}
+              placeholder="Введите текст объявления"
+              rows={6}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-2 block">Получатели</label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={recipients.includes('employees')}
+                  onChange={e => {
+                    if (e.target.checked) {
+                      setRecipients([...recipients, 'employees']);
+                    } else {
+                      setRecipients(recipients.filter(r => r !== 'employees'));
+                    }
+                  }}
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-slate-700">Сотрудники</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={recipients.includes('warehouse')}
+                  onChange={e => {
+                    if (e.target.checked) {
+                      setRecipients([...recipients, 'warehouse']);
+                    } else {
+                      setRecipients(recipients.filter(r => r !== 'warehouse'));
+                    }
+                  }}
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-slate-700">Кладовщик</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Отмена</button>
+          <button
+            onClick={handleSubmit}
+            disabled={!title.trim() || !text.trim()}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 rounded-lg text-white font-medium"
+          >
+            📢 Опубликовать
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============ ЧАТ ============
 function ChatPage({ data }: { data: ReturnType<typeof useData> }) {
-  const { chatMessages, employees } = data;
+  const { chatMessages, employees, announcements } = data;
   const [selectedChat, setSelectedChat] = useState<string>(employees[0]?.id || '');
   const [newMessage, setNewMessage] = useState('');
+  const [showCreateAnnouncement, setShowCreateAnnouncement] = useState(false);
 
   // Функция для форматирования ФИО в формате "Фамилия И.О."
   const formatFullName = (fullName: string) => {
@@ -3267,12 +3398,34 @@ function ChatPage({ data }: { data: ReturnType<typeof useData> }) {
     setNewMessage(''); data.refresh();
   };
 
+  const handleCreateAnnouncement = async (announcement: { title: string; text: string; recipients: string[] }) => {
+    try {
+      await gs.createAnnouncement(announcement);
+      setShowCreateAnnouncement(false);
+      alert('✅ Объявление успешно создано!');
+    } catch (error) {
+      console.error('Ошибка создания объявления:', error);
+      alert('❌ Ошибка при создании объявления. Попробуйте ещё раз.');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Сообщения</h2>
-        <p className="text-slate-500 text-sm mt-1">Чат с сотрудниками</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Сообщения</h2>
+          <p className="text-slate-500 text-sm mt-1">Чат с сотрудниками</p>
+        </div>
+        <button
+          onClick={() => setShowCreateAnnouncement(true)}
+          className="px-4 py-2 bg-orange-600 hover:bg-orange-500 rounded-lg text-white text-sm font-medium shadow-sm"
+        >
+          📢 СОЗДАТЬ ОБЪЯВЛЕНИЕ
+        </button>
       </div>
+
+      {/* Панель объявлений для руководителя */}
+      <AnnouncementsPanel announcements={announcements} />
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex h-[600px] shadow-sm">
         <div className="w-80 border-r border-slate-200 flex flex-col">
@@ -3344,6 +3497,13 @@ function ChatPage({ data }: { data: ReturnType<typeof useData> }) {
           </div>
         </div>
       </div>
+
+      {showCreateAnnouncement && (
+        <CreateAnnouncementModal
+          onClose={() => setShowCreateAnnouncement(false)}
+          onCreate={handleCreateAnnouncement}
+        />
+      )}
     </div>
   );
 }
