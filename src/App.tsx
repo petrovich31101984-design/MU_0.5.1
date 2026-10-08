@@ -1,6 +1,84 @@
 import { useState, useEffect, useCallback, Component, type ReactNode } from 'react';
 import * as gs from './services/googleSheets';
 
+// Компонент экрана ошибки подключения
+function ConnectionErrorScreen({ error, onRetry }: { error: string; onRetry: () => void }) {
+  const [newUrl, setNewUrl] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleUpdateUrl = () => {
+    if (!newUrl.trim()) {
+      alert('Введите URL веб-приложения');
+      return;
+    }
+    setIsUpdating(true);
+    gs.saveConfig(newUrl.trim());
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  };
+
+  const handleDisconnect = () => {
+    if (confirm('Вы уверены? Приложение перестанет работать с Google Sheets.')) {
+      gs.clearConfig();
+      window.location.reload();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-8 border border-red-200 shadow-lg max-w-lg w-full">
+        <img src={LOGO_URL} alt="АлкоСпас" className="w-32 h-32 object-contain mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-slate-800 text-center mb-2">Ошибка подключения</h2>
+        <p className="text-red-600 text-sm text-center mb-4">{error}</p>
+        
+        <div className="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
+          <p className="text-sm text-slate-600 mb-2 font-medium">Проверьте:</p>
+          <ul className="text-sm text-slate-700 space-y-1 list-disc list-inside">
+            <li>URL веб-приложения Apps Script</li>
+            <li>Доступ к таблице (публичный)</li>
+            <li>Структуру таблицы (должны быть все листы)</li>
+            <li>Интернет-соединение</li>
+          </ul>
+        </div>
+
+        <div className="space-y-3 mb-4">
+          <label className="block text-sm font-medium text-slate-700">Изменить URL подключения:</label>
+          <input
+            type="text"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            placeholder="https://script.google.com/macros/s/..."
+            className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          />
+          <button
+            onClick={handleUpdateUrl}
+            disabled={isUpdating || !newUrl.trim()}
+            className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 rounded-lg text-white font-medium shadow-lg shadow-blue-600/20 disabled:shadow-none"
+          >
+            {isUpdating ? '⏳ Обновление...' : '🔗 Обновить URL'}
+          </button>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={onRetry}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-lg text-white font-medium shadow-lg shadow-red-600/20"
+          >
+            🔄 Повторить
+          </button>
+          <button
+            onClick={handleDisconnect}
+            className="flex-1 px-4 py-3 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 font-medium"
+          >
+            ⚙️ Настройки
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Error Boundary для предотвращения белой страницы
 export class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -211,25 +289,7 @@ export default function App() {
   }
 
   if (data.error) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 border border-red-200 shadow-lg max-w-lg w-full">
-          <img src={LOGO_URL} alt="АлкоСпас" className="w-32 h-32 object-contain mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-800 text-center mb-2">Ошибка подключения</h2>
-          <p className="text-red-600 text-sm text-center mb-4">{data.error}</p>
-          <div className="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
-            <p className="text-sm text-slate-600 mb-2 font-medium">Проверьте:</p>
-            <ul className="text-sm text-slate-700 space-y-1 list-disc list-inside">
-              <li>URL веб-приложения Apps Script</li>
-              <li>Доступ к таблице (публичный)</li>
-              <li>Структуру таблицы (должны быть все листы)</li>
-              <li>Интернет-соединение</li>
-            </ul>
-          </div>
-          <button onClick={() => data.refresh()} className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-lg text-white font-medium shadow-lg shadow-red-600/20">🔄 Повторить попытку</button>
-        </div>
-      </div>
-    );
+    return <ConnectionErrorScreen error={data.error} onRetry={data.refresh} />;
   }
 
   const menuItems: { id: Page; label: string; icon: string }[] = [
