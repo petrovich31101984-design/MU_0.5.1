@@ -455,7 +455,7 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
           <div className="text-sm italic text-slate-600 mb-2">Остатки на руках</div>
           <div className="text-2xl font-bold text-blue-600 mb-1">{totalBalanceOnHand.toLocaleString('ru-RU')} ₽</div>
           <div className="text-xs text-slate-500">
-            Текущий остаток
+            {now.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
           </div>
         </div>
         {/* Листов расхода за предыдущий месяц */}
