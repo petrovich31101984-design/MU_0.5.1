@@ -399,6 +399,10 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
   const lastMonthName = monthNames[lastMonthDate.getMonth()];
   const currentMonthName = monthNames[now.getMonth()];
   
+  // Названия месяцев в именительном падеже для заголовков
+  const lastMonthNameNominative = lastMonthDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+  const currentMonthNameNominative = now.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+  
   const activeEmployees = employees.filter(e => e.status === 'Активен');
 
   // Расчеты за предыдущий месяц
@@ -575,10 +579,10 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
               <tr className="border-b border-slate-200 text-left bg-slate-50">
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Статус</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Приход<br /><span className="text-xs font-normal">({lastMonthName})</span></th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Расход<br /><span className="text-xs font-normal">({lastMonthName})</span></th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Приход<br /><span className="text-xs font-normal">({lastMonthNameNominative})</span></th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Расход<br /><span className="text-xs font-normal">({lastMonthNameNominative})</span></th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Остатки на руках</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Листов расхода<br /><span className="text-xs font-normal">({lastMonthName})</span></th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Листов расхода<br /><span className="text-xs font-normal">({lastMonthNameNominative})</span></th>
               </tr>
             </thead>
             <tbody>
