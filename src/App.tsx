@@ -566,7 +566,7 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
         <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-800">Сотрудники — общая сводка</h3>
           <div className="text-sm text-slate-600">
-            За {currentMonthName}: Активных сотрудников: <span className="font-semibold text-emerald-600">{activeEmployees.length}</span>
+            Активных сотрудников: <span className="font-semibold text-emerald-600">{activeEmployees.length}</span>
           </div>
         </div>
         <div className="overflow-x-auto" style={{ maxHeight: '400px' }}>
