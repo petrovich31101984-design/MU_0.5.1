@@ -1700,10 +1700,10 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Категория</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Ед. изм.</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Производитель</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Кол-во в упаковке</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Цена за упаковку (₽)</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Цена за единицу (₽)</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Действия</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Кол-во в упаковке</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Цена за упаковку (₽)</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Цена за единицу (₽)</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -1723,15 +1723,15 @@ function NomenclaturePage({ data }: { data: ReturnType<typeof useData> }) {
                 </td>
                 <td className="px-5 py-3 text-sm text-slate-700">{item.unit}</td>
                 <td className="px-5 py-3 text-sm text-slate-700">{item.manufacturer || '-'}</td>
-                <td className="px-5 py-3 text-center text-sm font-semibold text-slate-800">{item.packageQuantity || 1}</td>
-                <td className="px-5 py-3 text-right text-sm font-semibold text-emerald-600">
+                <td className="px-5 py-3 text-sm font-semibold text-slate-800">{item.packageQuantity || 1}</td>
+                <td className="px-5 py-3 text-sm font-semibold text-emerald-600">
                   {(item.currentPrice * (item.packageQuantity || 1)).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
                 </td>
-                <td className="px-5 py-3 text-right text-sm font-semibold text-blue-600">
+                <td className="px-5 py-3 text-sm font-semibold text-blue-600">
                   {item.currentPrice.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
                 </td>
                 <td className="px-5 py-3">
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center gap-2">
                     <button 
                       onClick={() => handleEdit(item)}
                       className="text-blue-600 hover:text-blue-800 text-lg"
