@@ -2528,8 +2528,7 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
   const [filterType, setFilterType] = useState<'month' | 'quarter' | 'halfyear' | 'year' | 'all'>('month');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
-    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
   const [showArchiveList, setShowArchiveList] = useState(false);
   const [showFiredEmployees, setShowFiredEmployees] = useState(false);
