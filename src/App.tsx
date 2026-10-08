@@ -404,22 +404,56 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
   const currentMonthNameNominative = now.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
   
   const activeEmployees = employees.filter(e => e.status === 'Активен');
+  const allEmployees = employees.filter(e => e.status !== 'Уволен');
 
   // Расчеты за предыдущий месяц
   const getArrival = (empId: string, month: string) => arrivals.filter(a => a.employeeId === empId && a.month === month).reduce((s, a) => s + a.amount, 0);
   const getExpenseValue = (empId: string, month: string) => expenseSheets.filter(s => s.employeeId === empId && s.month === month && !s.archived).reduce((s, sheet) => s + sheet.totalAmount, 0);
   const getExpenseCount = (empId: string, month: string) => expenseSheets.filter(s => s.employeeId === empId && s.month === month && !s.archived).length;
 
-  // Расчеты за ВСЁ время (для карточки "Остатки на руках")
-  const getArrivalAllTime = (empId: string) => arrivals.filter(a => a.employeeId === empId).reduce((s, a) => s + a.amount, 0);
-  const getExpenseValueAllTime = (empId: string) => expenseSheets.filter(s => s.employeeId === empId && !s.archived).reduce((s, sheet) => s + sheet.totalAmount, 0);
+  // Функция для расчёта остатка по сотруднику и номенклатуре (в количестве)
+  const calculateBalance = (employeeId: string, nomenclatureId: string): number => {
+    let totalArrival = 0;
+    arrivals.forEach(arrival => {
+      if (arrival.employeeId === employeeId && arrival.items) {
+        arrival.items.forEach(item => {
+          if (item.nomenclatureId === nomenclatureId) {
+            totalArrival += item.quantity;
+          }
+        });
+      }
+    });
+
+    let totalExpense = 0;
+    expenseSheets.forEach(sheet => {
+      if (sheet.employeeId === employeeId && !sheet.archived && sheet.items) {
+        sheet.items.forEach(item => {
+          if (item.nomenclatureId === nomenclatureId) {
+            totalExpense += item.quantity;
+          }
+        });
+      }
+    });
+
+    return totalArrival - totalExpense;
+  };
+
+  // Функция для расчёта стоимости остатка сотрудника
+  const calculateEmployeeBalanceValue = (employeeId: string): number => {
+    let totalValue = 0;
+    nomenclature.forEach(item => {
+      const balance = calculateBalance(employeeId, item.id);
+      totalValue += balance * item.currentPrice;
+    });
+    return totalValue;
+  };
 
   const totalArrivalLastMonth = activeEmployees.reduce((s, e) => s + getArrival(e.id, lastMonth), 0);
   const totalExpenseLastMonth = activeEmployees.reduce((s, e) => s + getExpenseValue(e.id, lastMonth), 0);
   const totalExpenseCountLastMonth = activeEmployees.reduce((s, e) => s + getExpenseCount(e.id, lastMonth), 0);
   
-  // Остатки на руках = Все приходы за всё время - Все расходы за всё время
-  const totalBalanceOnHand = activeEmployees.reduce((s, e) => s + (getArrivalAllTime(e.id) - getExpenseValueAllTime(e.id)), 0);
+  // Остатки на руках = сумма стоимости остатков всех сотрудников
+  const totalBalanceOnHand = allEmployees.reduce((s, e) => s + calculateEmployeeBalanceValue(e.id), 0);
   
   const pendingReturns = returns.filter(r => r.status === 'Новый').length;
 
@@ -596,7 +630,7 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
                 .map(emp => {
                   const arr = getArrival(emp.id, lastMonth);
                   const exp = getExpenseValue(emp.id, lastMonth);
-                  const bal = getArrivalAllTime(emp.id) - getExpenseValueAllTime(emp.id);
+                  const bal = calculateEmployeeBalanceValue(emp.id);
                   const expenseCount = getExpenseCount(emp.id, lastMonth);
                   return (
                   <tr key={emp.id} className="border-b border-slate-100 hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer">
