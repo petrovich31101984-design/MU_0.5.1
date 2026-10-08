@@ -575,10 +575,10 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
               <tr className="border-b border-slate-200 text-left bg-slate-50">
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
                 <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Статус</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Приход</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Расход</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Остаток</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Листов расхода</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Приход<br /><span className="text-xs font-normal">({lastMonthName})</span></th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Расход<br /><span className="text-xs font-normal">({lastMonthName})</span></th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Остатки на руках</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Листов расхода<br /><span className="text-xs font-normal">({lastMonthName})</span></th>
               </tr>
             </thead>
             <tbody>
@@ -591,10 +591,10 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
                 })
                 .slice(0, 5)
                 .map(emp => {
-                  const arr = getArrival(emp.id, currentMonth);
-                  const exp = getExpenseValue(emp.id, currentMonth);
-                  const bal = arr - exp;
-                  const expenseCount = getExpenseCount(emp.id, currentMonth);
+                  const arr = getArrival(emp.id, lastMonth);
+                  const exp = getExpenseValue(emp.id, lastMonth);
+                  const bal = getArrivalAllTime(emp.id) - getExpenseValueAllTime(emp.id);
+                  const expenseCount = getExpenseCount(emp.id, lastMonth);
                   return (
                   <tr key={emp.id} className="border-b border-slate-100 hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer">
                     <td className="px-5 py-3">
