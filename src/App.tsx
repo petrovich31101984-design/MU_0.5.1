@@ -453,6 +453,7 @@ function Dashboard({ data }: { data: ReturnType<typeof useData> }) {
         {/* Остатки на руках */}
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm border-l-4 border-l-blue-500 flex flex-col justify-between">
           <div className="text-sm italic text-slate-600 mb-2">Остатки на руках</div>
+          <div className="flex-1"></div>
           <div className="text-2xl font-bold text-blue-600 mb-1">{totalBalanceOnHand.toLocaleString('ru-RU')} ₽</div>
           <div className="text-xs text-slate-500 mt-auto">
             {now.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
