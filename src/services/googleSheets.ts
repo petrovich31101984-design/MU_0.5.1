@@ -48,8 +48,11 @@ export async function testConnection(): Promise<{ success: boolean; title?: stri
   }
 
   try {
-    const url = `${config.scriptUrl}?action=test`;
-    const response = await fetch(url);
+    const url = `${config.scriptUrl}?action=test&_t=${Date.now()}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      cache: 'no-store'
+    });
     
     if (!response.ok) {
       return { success: false, error: `Ошибка ${response.status}` };
@@ -85,11 +88,8 @@ async function fetchData(action: string): Promise<any[]> {
   
   try {
     const response = await fetch(url, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      }
+      method: 'GET',
+      cache: 'no-store'
     });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -117,11 +117,7 @@ async function postData(action: string, data: any): Promise<void> {
   try {
     const response = await fetch(config.scriptUrl, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'text/plain;charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action, data }),
       redirect: 'follow',
       cache: 'no-store'
