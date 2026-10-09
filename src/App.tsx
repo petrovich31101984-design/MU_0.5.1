@@ -2258,14 +2258,14 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
       </div>
 
       {showAddArrival && <ArrivalCardModal 
-        employees={employees.filter(e => e.status === 'Активен')} 
+        employees={employees.filter(e => e.status !== 'Уволен')} 
         nomenclature={nomenclature}
         onClose={() => setShowAddArrival(false)} 
         onAdd={handleAddArrival} 
       />}
 
       {editingArrival && <ArrivalCardModal 
-        employees={employees.filter(e => e.status === 'Активен')} 
+        employees={employees.filter(e => e.status !== 'Уволен')} 
         nomenclature={nomenclature}
         initialData={editingArrival}
         onClose={() => setEditingArrival(null)} 
