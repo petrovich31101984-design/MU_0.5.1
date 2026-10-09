@@ -556,8 +556,10 @@ function ArrivalCardModal({
       alert('Добавьте хотя бы одну позицию');
       return;
     }
+    const selectedEmployee = employees.find(e => e.id === form.employeeId);
     onAdd({
       employeeId: form.employeeId,
+      employeeName: selectedEmployee?.fullName || '',
       date: form.date,
       items: form.items,
       amount: totalAmount,
@@ -1688,7 +1690,6 @@ function ViewArrivalModal({
   nomenclature: gs.Nomenclature[];
   onClose: () => void;
 }) {
-  const emp = employees.find(e => e.id === arrival.employeeId);
   const items = (arrival as any).items || [];
 
   return (
@@ -1711,7 +1712,7 @@ function ViewArrivalModal({
             <div>
               <label className="text-sm text-slate-600 mb-1 block">Сотрудник</label>
               <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
-                {emp?.fullName || arrival.employeeId}
+                {arrival.employeeName || arrival.employeeId}
               </div>
             </div>
           </div>
@@ -2119,6 +2120,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
       date: form.date,
       month: selectedMonth,
       addedBy: 'Руководитель',
+      employeeName: form.employeeName || '',
     };
     setArrivals([...arrivals, newArrival]);
     gs.addArrival(newArrival).catch(err => {
@@ -2152,6 +2154,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
     const updatedArrival = {
       ...editingArrival,
       ...form,
+      employeeName: form.employeeName || editingArrival.employeeName || '',
     };
     
     setArrivals(arrivals.map(a => a.id === editingArrival.id ? updatedArrival : a));
@@ -2213,7 +2216,6 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
           </thead>
           <tbody>
             {filteredArrivals.sort((a, b) => b.date.localeCompare(a.date)).map(arr => {
-              const emp = employees.find(e => e.id === arr.employeeId);
               return (
                 <tr key={arr.id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-5 py-3 text-sm text-slate-700">
@@ -2223,7 +2225,7 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
                     className="px-5 py-3 text-sm text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
                     onClick={() => setViewingArrival(arr)}
                   >
-                    {emp?.fullName || arr.employeeId}
+                    {arr.employeeName || arr.employeeId}
                   </td>
                   <td className="px-5 py-3">
                     <span className={`px-2 py-1 rounded-full text-xs ${arr.type === 'Плановый' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{arr.type}</span>

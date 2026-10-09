@@ -421,6 +421,7 @@ function updateArrivalRow(id, data) {
   for (let i = 1; i < allData.length; i++) {
     if (String(allData[i][0]) === String(id)) {
       if (data.employeeId !== undefined) sheet.getRange(i + 1, 2).setValue(data.employeeId);
+      if (data.employeeName !== undefined) sheet.getRange(i + 1, 3).setValue(data.employeeName);
       if (data.date !== undefined) sheet.getRange(i + 1, 4).setValue(data.date);
       if (data.amount !== undefined) sheet.getRange(i + 1, 6).setValue(data.amount);
       if (data.items !== undefined) sheet.getRange(i + 1, 11).setValue(JSON.stringify(data.items));

@@ -161,6 +161,7 @@ export interface Nomenclature {
 export interface Arrival {
   id: string;
   employeeId: string;
+  employeeName: string;
   date: string;
   month: string;
   amount: number;
@@ -307,6 +308,7 @@ export async function getArrivals(): Promise<Arrival[]> {
   return data.map((row: any) => ({
     id: row['ID'] || '',
     employeeId: row['Сотрудник_ID'] || '',
+    employeeName: row['ФИО сотрудника'] || '',
     date: row['Дата'] || '',
     month: row['Месяц'] || '',
     amount: parseFloat(row['Сумма (₽)'] || '0'),
