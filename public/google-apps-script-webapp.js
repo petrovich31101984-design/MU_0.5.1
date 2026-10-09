@@ -109,6 +109,9 @@ function doPost(e) {
       case 'addAuditLog':
         addAuditLogRow(data.data);
         return jsonResponse({ success: true });
+      case 'clearAuditLog':
+        clearAuditLog();
+        return jsonResponse({ success: true });
       case 'updateNomenclature':
         updateNomenclatureRow(data.data);
         return jsonResponse({ success: true });
@@ -670,6 +673,23 @@ function addAuditLogRow(data) {
     data.ip || '',
     data.device || ''
   ]);
+}
+
+function clearAuditLog() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Журнал изменений');
+  if (!sheet) {
+    Logger.log('Лист "Журнал изменений" не найден');
+    return;
+  }
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    // Удаляем все строки кроме заголовка
+    sheet.deleteRows(2, lastRow - 1);
+    Logger.log('Журнал изменений очищен. Удалено строк: ' + (lastRow - 1));
+  } else {
+    Logger.log('Журнал изменений уже пуст');
+  }
 }
 
 function addNomenclatureRow(data) {

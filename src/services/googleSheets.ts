@@ -510,6 +510,10 @@ export async function addAuditLog(log: Partial<AuditEntry>): Promise<void> {
   await postData('addAuditLog', log);
 }
 
+export async function clearAuditLog(): Promise<void> {
+  await postData('clearAuditLog', {});
+}
+
 export async function updateNomenclature(id: string, data: any): Promise<void> {
   await postData('updateNomenclature', { id, ...data });
 }

@@ -93,11 +93,34 @@ function AuditPage({ data }: { data: ReturnType<typeof useData> }) {
     return newValue.includes(searchLower) || oldValue.includes(searchLower) || recordId.includes(searchLower);
   });
 
+  const handleClearLog = async () => {
+    if (!confirm('Вы уверены, что хотите очистить весь журнал изменений?\n\nЭто действие нельзя отменить!')) {
+      return;
+    }
+
+    try {
+      await gs.clearAuditLog();
+      await data.refresh();
+      alert('✅ Журнал изменений успешно очищен');
+    } catch (error) {
+      console.error('Ошибка очистки журнала:', error);
+      alert('❌ Ошибка при очистке журнала. Попробуйте ещё раз.');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Журнал изменений</h2>
-        <p className="text-slate-500 text-sm mt-1">История всех действий • Всего записей: {auditLog.length}</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Журнал изменений</h2>
+          <p className="text-slate-500 text-sm mt-1">История всех действий • Всего записей: {auditLog.length}</p>
+        </div>
+        <button
+          onClick={handleClearLog}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium shadow-sm"
+        >
+          🗑️ Очистить журнал
+        </button>
       </div>
 
       <input type="text" placeholder="Поиск..." value={search} onChange={e => setSearch(e.target.value)}
