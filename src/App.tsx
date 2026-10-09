@@ -2952,15 +2952,15 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
             {filtered.length === 0 && ' — попробуйте изменить запрос'}
           </div>
         )}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
+        <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+          <table className="w-full border-collapse">
+            <thead className="sticky top-0 z-10">
               <tr className="border-b border-slate-200 text-left bg-slate-50">
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Персональный номер</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник (ФИО)</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Статус</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Последний вход</th>
-                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Действия</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase bg-slate-50">Персональный номер</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase bg-slate-50">Сотрудник (ФИО)</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase bg-slate-50">Статус</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase bg-slate-50">Последний вход</th>
+                <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase bg-slate-50">Действия</th>
               </tr>
             </thead>
             <tbody>
