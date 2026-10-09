@@ -231,6 +231,7 @@ function getNomenclatureData() { return readSheetData('Номенклатура'
 function getPricesData() { return readSheetData('Цены'); }
 function getArrivalsData() { 
   const data = readSheetData('Приход');
+  Logger.log('getArrivalsData: прочитано ' + data.length + ' записей');
   return data.map(row => {
     const result = Object.assign({}, row);
     try {
@@ -238,6 +239,10 @@ function getArrivalsData() {
       result.items = JSON.parse(itemsJson);
     } catch (e) {
       result.items = [];
+    }
+    // Логируем информацию о поле Архив
+    if (row['ID'] && row['ФИО сотрудника'] && row['ФИО сотрудника'].includes('Стадник')) {
+      Logger.log('Найдена запись Стадник: ID=' + row['ID'] + ', Архив=' + row['Архив'] + ', Сумма=' + row['Сумма (₽)']);
     }
     return result;
   });
