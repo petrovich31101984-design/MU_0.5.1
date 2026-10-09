@@ -184,12 +184,41 @@ function readSheetData(sheetName) {
 }
 
 function getEmployeesData() {
-  const data = readSheetData('Сотрудники');
-  return data.map(row => ({
-    ...row,
-    'Персональный номер': String(row['Персональный номер'] || ''),
-    'Пароль': row['Пароль (хэш)'] || ''
-  }));
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
+  if (!sheet) return [];
+  
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return [];
+  
+  const headers = data[0];
+  return data.slice(1).filter(row => row[0] !== '').map(row => {
+    const obj = {};
+    headers.forEach((h, i) => {
+      const val = row[i];
+      // Специальная обработка для персонального номера - сохраняем как текст
+      if (h === 'Персональный номер') {
+        // Получаем значение как текст из ячейки
+        const cell = sheet.getRange(data.indexOf(row) + 1, i + 1);
+        const textValue = cell.getDisplayValue();
+        obj[h] = textValue || '';
+      }
+      // Специальная обработка для поля "Месяц" - не конвертируем в ISO
+      else if (h === 'Месяц') {
+        if (val instanceof Date) {
+          const year = val.getFullYear();
+          const month = String(val.getMonth() + 1).padStart(2, '0');
+          obj[h] = `${year}-${month}`;
+        } else {
+          obj[h] = val || '';
+        }
+      } else if (val instanceof Date) {
+        obj[h] = val.toISOString();
+      } else {
+        obj[h] = val || '';
+      }
+    });
+    return obj;
+  });
 }
 
 function getNomenclatureData() { return readSheetData('Номенклатура'); }
