@@ -191,14 +191,14 @@ function getEmployeesData() {
   if (data.length < 2) return [];
   
   const headers = data[0];
-  return data.slice(1).filter(row => row[0] !== '').map(row => {
+  return data.slice(1).filter(row => row[0] !== '').map((row, rowIndex) => {
     const obj = {};
     headers.forEach((h, i) => {
       const val = row[i];
       // Специальная обработка для персонального номера - сохраняем как текст
       if (h === 'Персональный номер') {
         // Получаем значение как текст из ячейки
-        const cell = sheet.getRange(data.indexOf(row) + 1, i + 1);
+        const cell = sheet.getRange(rowIndex + 2, i + 1);
         const textValue = cell.getDisplayValue();
         obj[h] = textValue || '';
       }
@@ -261,9 +261,12 @@ function addEmployeeRow(data) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
   const newRow = sheet.getLastRow() + 1;
   
+  // ВАЖНО: Сначала устанавливаем формат ТЕКСТ для колонки B
+  sheet.getRange('B2:B1000').setNumberFormat('@');
+  
   sheet.appendRow([
     data.id || '',
-    String(data.personalNumber || ''),
+    "'" + String(data.personalNumber || ''), // Апостроф принудительно делает значение текстом
     data.fullName || '',
     data.password || data.passwordHash || '',
     data.status || 'Активен',
@@ -279,15 +282,15 @@ function addEmployeeRow(data) {
     data.shiftOpen ? 'ДА' : 'НЕТ'
   ]);
   
-  // Устанавливаем формат ячейки персонального номера как ТЕКСТ
-  sheet.getRange(newRow, 2).setNumberFormat('@');
-  
   writeAudit('Сотрудники', data.id, 'Создание', '', 'Сотрудник: ' + data.fullName);
 }
 
 function updateEmployeeRow(id, data) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
   const allData = sheet.getDataRange().getValues();
+  
+  // Устанавливаем формат ТЕКСТ для всей колонки B
+  sheet.getRange('B2:B1000').setNumberFormat('@');
   
   for (let i = 1; i < allData.length; i++) {
     if (allData[i][0] === id) {
@@ -297,7 +300,7 @@ function updateEmployeeRow(id, data) {
       if (data.personalNumber !== undefined) {
         const cell = sheet.getRange(i + 1, 2);
         cell.setNumberFormat('@'); // Устанавливаем формат ТЕКСТ
-        cell.setValue(String(data.personalNumber)); // Принудительно конвертируем в строку
+        cell.setValue("'" + String(data.personalNumber)); // Апостроф принудительно делает значение текстом
       }
       if (data.fullName !== undefined) sheet.getRange(i + 1, 3).setValue(data.fullName);
       if (data.position !== undefined) sheet.getRange(i + 1, 6).setValue(data.position);
@@ -314,6 +317,9 @@ function updateEmployeeShiftRow(id, shiftOpen) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
   const allData = sheet.getDataRange().getValues();
   
+  // Устанавливаем формат ТЕКСТ для всей колонки B
+  sheet.getRange('B2:B1000').setNumberFormat('@');
+  
   for (let i = 1; i < allData.length; i++) {
     if (String(allData[i][0]) === String(id)) {
       sheet.getRange(i + 1, 15).setValue(shiftOpen ? 'ДА' : 'НЕТ');
@@ -324,7 +330,7 @@ function updateEmployeeShiftRow(id, shiftOpen) {
       const personalNumber = String(allData[i][1] || '');
       const cell = sheet.getRange(i + 1, 2);
       cell.setNumberFormat('@'); // Устанавливаем формат ТЕКСТ
-      cell.setValue(personalNumber);
+      cell.setValue("'" + personalNumber); // Апостроф принудительно делает значение текстом
       writeAudit('Сотрудники', id, 'Изменение смены', '', shiftOpen ? 'Смена открыта' : 'Смена закрыта');
       break;
     }
@@ -785,6 +791,9 @@ function createSheet_Employees(ss) {
   sheet.setColumnWidth(6, 150);
   sheet.setColumnWidth(10, 150);
   
+  // ВАЖНО: Устанавливаем формат ТЕКСТ для колонки персональных номеров
+  sheet.getRange('B2:B1000').setNumberFormat('@');
+  
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInList(['Активен', 'Неактивен', 'Отпуск', 'Уволен']).build();
   sheet.getRange('E2:E1000').setDataValidation(statusRule);
   
@@ -976,12 +985,13 @@ function fixPersonalNumberFormat() {
   // Устанавливаем формат ТЕКСТ для всей колонки персональных номеров (B2:B1000)
   sheet.getRange('B2:B1000').setNumberFormat('@');
   
-  // Пересохраняем все существующие значения как строки
+  // Пересохраняем все существующие значения как строки с апострофом
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     const personalNumber = String(data[i][1] || '');
     if (personalNumber) {
-      sheet.getRange(i + 1, 2).setValue(personalNumber);
+      // Используем апостроф для принудительного текстового формата
+      sheet.getRange(i + 1, 2).setValue("'" + personalNumber);
     }
   }
   
