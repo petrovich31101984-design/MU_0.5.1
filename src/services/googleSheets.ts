@@ -81,10 +81,16 @@ async function fetchData(action: string): Promise<any[]> {
     throw new Error('Не настроено подключение');
   }
 
-  const url = `${config.scriptUrl}?action=${action}`;
+  const url = `${config.scriptUrl}?action=${action}&_t=${Date.now()}`;
   
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -111,9 +117,14 @@ async function postData(action: string, data: any): Promise<void> {
   try {
     const response = await fetch(config.scriptUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      headers: { 
+        'Content-Type': 'text/plain;charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      },
       body: JSON.stringify({ action, data }),
-      redirect: 'follow'
+      redirect: 'follow',
+      cache: 'no-store'
     });
     
     if (!response.ok) {
