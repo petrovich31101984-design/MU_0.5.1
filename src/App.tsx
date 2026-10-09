@@ -2633,7 +2633,7 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
       personalNumber: form.personalNumber,
       fullName: form.fullName,
       password: form.password,
-      status: 'Активен',
+      status: 'Неактивен',
       position: form.position,
       hireDate: new Date().toISOString().split('T')[0],
       blocked: false,
