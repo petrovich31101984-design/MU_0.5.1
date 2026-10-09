@@ -97,6 +97,8 @@ function doPost(e) {
       case 'restoreArrival':
         restoreArrivalRow(data.data.id);
         return jsonResponse({ success: true });
+      case 'getArrivals':
+        return jsonResponse(getArrivalsData());
       case 'addExpense':
         addExpenseRow(data.data);
         return jsonResponse({ success: true });

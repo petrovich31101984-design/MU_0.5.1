@@ -1148,7 +1148,7 @@ function ExpenseSheetView({
 // ============ РАСХОД У СОТРУДНИКА ============
 // ============ АРХИВ ============
 function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, expenseSheets, setExpenseSheets } = data;
+  const { employees, expenseSheets, setExpenseSheets, arrivals, setArrivals } = data;
   const [filterType, setFilterType] = useState<'month' | 'quarter' | 'halfyear' | 'year' | 'all'>('month');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -1156,6 +1156,7 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
   });
   const [showArchiveList, setShowArchiveList] = useState(false);
   const [showFiredEmployees, setShowFiredEmployees] = useState(false);
+  const [showArrivalsArchive, setShowArrivalsArchive] = useState(false);
   
   // Получение уволенных сотрудников
   const firedEmployees = employees.filter(e => e.status === 'Уволен');
@@ -1209,9 +1210,19 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
     return periodMonths.includes(s.month);
   });
 
+  // Фильтрация архивированных карт прихода
+  const archivedArrivals = arrivals.filter(a => {
+    if (!a.archived) return false;
+    if (filterType === 'all') return true;
+    const periodMonths = getPeriodMonths();
+    return periodMonths.includes(a.month);
+  });
+
   // Расчёт статистики
   const totalExpense = archivedSheets.reduce((sum, s) => sum + s.totalAmount, 0);
   const sheetsCount = archivedSheets.length;
+  const totalArrivalAmount = archivedArrivals.reduce((sum, a) => sum + a.amount, 0);
+  const arrivalsCount = archivedArrivals.length;
 
   // Генерация списка месяцев
   const generateMonthOptions = () => {
@@ -1261,6 +1272,18 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
     }
   };
 
+  // Восстановление карты прихода из архива
+  const handleRestoreArrival = async (id: string) => {
+    if (!confirm('Восстановить карту прихода из архива?')) return;
+    setArrivals(arrivals.map(a => a.id === id ? { ...a, archived: false } : a));
+    try {
+      await gs.restoreArrival(id);
+    } catch (err) {
+      console.error('Ошибка восстановления:', err);
+      alert('Ошибка при восстановлении. Попробуйте ещё раз.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
@@ -1296,23 +1319,32 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
       </div>
 
       {/* Карточки статистики */}
-      <div className="flex" style={{ gap: 'calc(100% / 13)' }}>
+      <div className="grid grid-cols-3 gap-4">
         <div 
           onClick={() => setShowArchiveList(true)}
-          className="flex-1 bg-white rounded-lg p-2 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-500 hover:shadow-md transition-all"
+          className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-500 hover:shadow-md transition-all"
         >
-          <div className="text-xs text-slate-500 uppercase mb-1">ЛИСТОВ В АРХИВЕ</div>
-          <div className="text-lg font-bold text-slate-600">{sheetsCount}</div>
-          <div className="text-xs text-slate-500 mt-1 uppercase">{getPeriodLabel()}</div>
+          <div className="text-xs text-slate-500 uppercase mb-2">ЛИСТОВ РАСХОДА В АРХИВЕ</div>
+          <div className="text-2xl font-bold text-slate-600">{sheetsCount}</div>
+          <div className="text-xs text-slate-500 mt-2 uppercase">{getPeriodLabel()}</div>
+        </div>
+
+        <div 
+          onClick={() => setShowArrivalsArchive(true)}
+          className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-green-500 hover:shadow-md transition-all"
+        >
+          <div className="text-xs text-slate-500 uppercase mb-2">КАРТ ПРИХОДА В АРХИВЕ</div>
+          <div className="text-2xl font-bold text-green-600">{arrivalsCount}</div>
+          <div className="text-xs text-slate-500 mt-2 uppercase">{getPeriodLabel()}</div>
         </div>
         
         <div 
           onClick={() => setShowFiredEmployees(true)}
-          className="flex-1 bg-white rounded-lg p-2 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-red-500 hover:shadow-md transition-all"
+          className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm flex flex-col justify-between cursor-pointer hover:border-red-500 hover:shadow-md transition-all"
         >
-          <div className="text-xs text-slate-500 uppercase mb-1">СОТРУДНИКИ</div>
-          <div className="text-lg font-bold text-red-600">{firedEmployees.length}</div>
-          <div className="text-xs text-slate-500 mt-1 uppercase">Уволено</div>
+          <div className="text-xs text-slate-500 uppercase mb-2">СОТРУДНИКИ</div>
+          <div className="text-2xl font-bold text-red-600">{firedEmployees.length}</div>
+          <div className="text-xs text-slate-500 mt-2 uppercase">Уволено</div>
         </div>
       </div>
 
@@ -1399,6 +1431,81 @@ function ArchivePage({ data }: { data: ReturnType<typeof useData> }) {
                     </div>
                   ))}
                 </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно со списком архивированных карт прихода */}
+      {showArrivalsArchive && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-slate-100 px-6 py-4 flex justify-between items-center border-b border-slate-300">
+              <h2 className="text-xl font-bold text-slate-800">📥 Архивированные карты прихода</h2>
+              <button 
+                onClick={() => setShowArrivalsArchive(false)}
+                className="text-slate-500 hover:text-slate-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              {archivedArrivals.length === 0 ? (
+                <div className="bg-white rounded-xl p-8 text-center text-slate-500 border border-slate-200">
+                  <p>Нет архивированных карт прихода за {getPeriodLabel()}</p>
+                </div>
+              ) : (
+                archivedArrivals.map(arrival => (
+                  <div key={arrival.id} className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
+                    <div className="bg-slate-100 px-6 py-4 border-b border-slate-300">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-bold text-slate-800">Карта прихода</h3>
+                          <p className="text-sm text-slate-600 mt-1">
+                            {new Date(arrival.date).toLocaleDateString('ru-RU')} • {arrival.employeeName || 'Сотрудник'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleRestoreArrival(arrival.id)}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded transition-colors"
+                        >
+                          ♻️ Восстановить
+                        </button>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <span className="text-sm text-slate-600">Сумма:</span>
+                          <span className="ml-2 text-lg font-bold text-emerald-600">{arrival.amount.toLocaleString('ru-RU')} ₽</span>
+                        </div>
+                        <div>
+                          <span className="text-sm text-slate-600">Тип:</span>
+                          <span className="ml-2 text-sm font-semibold">{arrival.type}</span>
+                        </div>
+                      </div>
+                      {arrival.items && arrival.items.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-700 mb-2">Позиции:</h4>
+                          <div className="space-y-2">
+                            {arrival.items.map((item, idx) => {
+                              const nomenclatureItem = data.nomenclature.find(n => n.id === item.nomenclatureId);
+                              return (
+                                <div key={idx} className="flex justify-between items-center p-2 bg-slate-50 rounded">
+                                  <span className="text-sm text-slate-700">{nomenclatureItem?.name || 'Номенклатура'}</span>
+                                  <span className="text-sm font-semibold text-slate-800">
+                                    {item.quantity} × {item.price.toLocaleString('ru-RU')} ₽ = {item.total.toLocaleString('ru-RU')} ₽
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>
@@ -2260,6 +2367,21 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
     });
   };
 
+  const handleArchiveArrival = async (id: string) => {
+    if (!confirm('Отправить карту прихода в архив?')) return;
+    
+    // Оптимистичное обновление - сразу архивируем в локальном состоянии
+    setArrivals(arrivals.map(a => a.id === id ? { ...a, archived: true } : a));
+    
+    // Архивируем в Google Sheets в фоне (без ожидания)
+    gs.archiveArrival(id).catch(err => {
+      console.error('Ошибка архивирования прихода:', err);
+      alert('Ошибка при архивировании прихода. Попробуйте ещё раз.');
+      // При ошибке перезагружаем данные
+      refresh();
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
@@ -2325,6 +2447,13 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
                         title="Редактировать"
                       >
                         ✍️
+                      </button>
+                      <button 
+                        onClick={() => handleArchiveArrival(arr.id)}
+                        className="text-orange-600 hover:text-orange-800 text-lg"
+                        title="Отправить в архив"
+                      >
+                        📦
                       </button>
                       <button 
                         onClick={() => handleDeleteArrival(arr.id)}
