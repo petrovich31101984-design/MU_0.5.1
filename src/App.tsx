@@ -1526,12 +1526,28 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
   // Получаем всех сотрудников, кроме уволенных
   const activeEmployees = employees.filter(e => e.status !== 'Уволен');
 
+  // Отладочная информация
+  console.log('📊 BalancePage - Данные:', {
+    totalArrivals: arrivals.length,
+    totalExpenseSheets: expenseSheets.length,
+    totalEmployees: activeEmployees.length,
+    arrivalsByEmployee: activeEmployees.map(emp => ({
+      name: emp.fullName,
+      arrivals: arrivals.filter(a => a.employeeId === emp.id && a.archived !== true).length,
+      expenseSheets: expenseSheets.filter(s => s.employeeId === emp.id && s.archived !== true).length
+    }))
+  });
+
   // Функция для расчёта остатка по сотруднику и номенклатуре
   const calculateBalance = (employeeId: string, nomenclatureId: string): number => {
-    // Считаем приходы (только неархивированные)
+    // Считаем приходы (только неархивированные и существующие)
     let totalArrival = 0;
     arrivals.forEach(arrival => {
-      if (arrival.employeeId === employeeId && !arrival.archived && arrival.items) {
+      // Проверяем, что запись не архивирована и существует в базе
+      if (arrival.employeeId === employeeId && 
+          arrival.archived !== true && 
+          arrival.id && 
+          arrival.items) {
         arrival.items.forEach(item => {
           if (item.nomenclatureId === nomenclatureId) {
             totalArrival += item.quantity;
@@ -1540,10 +1556,13 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
       }
     });
 
-    // Считаем расходы (только неархивированные)
+    // Считаем расходы (только неархивированные и существующие)
     let totalExpense = 0;
     expenseSheets.forEach(sheet => {
-      if (sheet.employeeId === employeeId && !sheet.archived && sheet.items) {
+      if (sheet.employeeId === employeeId && 
+          sheet.archived !== true && 
+          sheet.id && 
+          sheet.items) {
         sheet.items.forEach(item => {
           if (item.nomenclatureId === nomenclatureId) {
             totalExpense += item.quantity;
@@ -1583,12 +1602,45 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
     return total;
   };
 
+  // Принудительное обновление данных
+  const handleForceRefresh = async () => {
+    console.log('🔄 Принудительное обновление данных...');
+    console.log('📊 Текущие данные:', {
+      arrivals: arrivals.length,
+      expenseSheets: expenseSheets.length,
+      employees: employees.length
+    });
+    
+    // Очищаем кэш браузера
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+      console.log('🗑️ Кэш браузера очищен');
+    }
+    
+    // Перезагружаем данные
+    await data.refresh();
+    console.log('✅ Данные обновлены');
+    
+    alert('✅ Данные обновлены! Кэш очищен.');
+  };
+
   return (
     <div className="space-y-6">
       {/* Шапка */}
       <div className="bg-slate-100 px-6 py-4 shadow-md">
-        <h2 className="text-2xl font-bold text-slate-800">🧰 Остаток у сотрудника</h2>
-        <p className="text-slate-600 mt-1">Просмотр остатков номенклатуры у сотрудников</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">🧰 Остаток у сотрудника</h2>
+            <p className="text-slate-600 mt-1">Просмотр остатков номенклатуры у сотрудников</p>
+          </div>
+          <button
+            onClick={handleForceRefresh}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm"
+          >
+            🔄 Обновить данные
+          </button>
+        </div>
       </div>
 
       {/* Тело */}
