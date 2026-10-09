@@ -2213,55 +2213,40 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-200 text-left bg-slate-50">
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Дата</th>
               <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Сотрудник</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase">Тип</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Сумма (₽)</th>
-              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Действия</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-right">Приход за месяц (₽)</th>
+              <th className="px-5 py-3 text-xs font-medium text-slate-600 uppercase text-center">Количество карт</th>
             </tr>
           </thead>
           <tbody>
-            {filteredArrivals.sort((a, b) => b.date.localeCompare(a.date)).map(arr => {
+            {employees.filter(e => e.status !== 'Уволен').map(emp => {
+              const empArrivals = filteredArrivals.filter(a => a.employeeId === emp.id);
+              const totalEmpAmount = empArrivals.reduce((sum, a) => sum + a.amount, 0);
+              const arrivalsCount = empArrivals.length;
+              
               return (
-                <tr key={arr.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-5 py-3 text-sm text-slate-700">
-                    {new Date(arr.date).toLocaleDateString('ru-RU')}
-                  </td>
-                  <td 
-                    className="px-5 py-3 text-sm text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
-                    onClick={() => setViewingArrival(arr)}
-                  >
-                    {arr.employeeName || arr.employeeId}
-                  </td>
+                <tr key={emp.id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-5 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${arr.type === 'Плановый' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{arr.type}</span>
-                  </td>
-                  <td className="px-5 py-3 text-right text-sm font-semibold text-emerald-600">{arr.amount.toLocaleString('ru-RU')} ₽</td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-center gap-2">
-                      <button 
-                        onClick={() => setEditingArrival(arr)}
-                        className="text-blue-600 hover:text-blue-800 text-lg"
-                        title="Редактировать"
-                      >
-                        ✍️
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteArrival(arr.id)}
-                        className="text-red-600 hover:text-red-800 text-lg"
-                        title="Удалить"
-                      >
-                        ❌
-                      </button>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white bg-blue-500">
+                        {(emp.fullName || '').split(' ').slice(0, 2).map(n => n[0]).join('')}
+                      </div>
+                      <div className="text-sm font-medium text-slate-800">{emp.fullName || 'Без имени'}</div>
                     </div>
+                  </td>
+                  <td className="px-5 py-3 text-right text-sm font-semibold text-emerald-600">
+                    {totalEmpAmount.toLocaleString('ru-RU')} ₽
+                  </td>
+                  <td className="px-5 py-3 text-center text-sm text-slate-700">
+                    {arrivalsCount}
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        {filteredArrivals.length === 0 && (
-          <div className="p-8 text-center text-slate-500"><p>Нет записей о приходе за {selectedMonthName}</p></div>
+        {employees.filter(e => e.status !== 'Уволен').length === 0 && (
+          <div className="p-8 text-center text-slate-500"><p>Нет сотрудников</p></div>
         )}
       </div>
 
