@@ -2923,16 +2923,17 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
   };
 
   // 🗑️ Полное удаление из базы данных
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     const emp = employees.find(e => e.id === id);
     if (confirm(`УДАЛИТЬ сотрудника "${emp?.fullName}"?\n\n⚠️ Это действие нельзя отменить!\nСотрудник будет полностью удалён из базы данных.`)) {
-      try {
-        await gs.deleteEmployee(id);
-        // Удаляем из локального состояния без обновления данных
-        data.setEmployees(employees.filter(e => e.id !== id));
-      } catch (error) {
-        alert(`❌ Ошибка при удалении: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
-      }
+      // Оптимистичное обновление - сразу удаляем из локального состояния
+      data.setEmployees(employees.filter(e => e.id !== id));
+      
+      // Удаляем из Google Sheets в фоне (без ожидания)
+      gs.deleteEmployee(id).catch(err => {
+        console.error('Ошибка удаления сотрудника:', err);
+        alert('Ошибка при удалении сотрудника. Попробуйте ещё раз.');
+      });
     }
   };
 
