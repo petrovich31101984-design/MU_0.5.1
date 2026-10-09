@@ -169,6 +169,7 @@ export interface Arrival {
   addedBy: string;
   type: string;
   comment: string;
+  archived: boolean;
   items?: Array<{ nomenclatureId: string; quantity: number; price: number; total: number }>;
 }
 
@@ -316,6 +317,7 @@ export async function getArrivals(): Promise<Arrival[]> {
     addedBy: row['Кем внесено'] || '',
     type: row['Тип'] || 'Плановый',
     comment: row['Комментарий'] || '',
+    archived: row['Архив'] === 'ДА',
     items: row.items || [],
   }));
 }
@@ -413,6 +415,14 @@ export async function updateArrival(id: string, data: Partial<Arrival>): Promise
 
 export async function deleteArrival(id: string): Promise<void> {
   await postData('deleteArrival', { id });
+}
+
+export async function archiveArrival(id: string): Promise<void> {
+  await postData('archiveArrival', { id });
+}
+
+export async function restoreArrival(id: string): Promise<void> {
+  await postData('restoreArrival', { id });
 }
 
 export async function getExpenseSheets(): Promise<ExpenseSheet[]> {

@@ -370,7 +370,7 @@ function ReportsPage({ data }: { data: ReturnType<typeof useData> }) {
 
   const reportData = employees.filter(e => e.status !== 'Уволен').map(emp => {
     const expenseSheetsCount = expenseSheets.filter(s => s.employeeId === emp.id && s.month === selectedMonth && !s.archived).length;
-    const arrival = arrivals.filter(a => a.employeeId === emp.id && a.month === selectedMonth).reduce((s, a) => s + a.amount, 0);
+    const arrival = arrivals.filter(a => a.employeeId === emp.id && a.month === selectedMonth && !a.archived).reduce((s, a) => s + a.amount, 0);
     const expense = expenseSheets.filter(s => s.employeeId === emp.id && s.month === selectedMonth && !s.archived).reduce((s, sheet) => s + sheet.totalAmount, 0);
     return { emp, expenseSheetsCount, arrival, expense, balance: arrival - expense };
   });
@@ -1528,10 +1528,10 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
 
   // Функция для расчёта остатка по сотруднику и номенклатуре
   const calculateBalance = (employeeId: string, nomenclatureId: string): number => {
-    // Считаем приходы
+    // Считаем приходы (только неархивированные)
     let totalArrival = 0;
     arrivals.forEach(arrival => {
-      if (arrival.employeeId === employeeId && arrival.items) {
+      if (arrival.employeeId === employeeId && !arrival.archived && arrival.items) {
         arrival.items.forEach(item => {
           if (item.nomenclatureId === nomenclatureId) {
             totalArrival += item.quantity;
@@ -1540,7 +1540,7 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
       }
     });
 
-    // Считаем расходы
+    // Считаем расходы (только неархивированные)
     let totalExpense = 0;
     expenseSheets.forEach(sheet => {
       if (sheet.employeeId === employeeId && !sheet.archived && sheet.items) {

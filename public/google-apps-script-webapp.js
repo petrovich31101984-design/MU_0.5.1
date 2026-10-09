@@ -91,6 +91,12 @@ function doPost(e) {
         deleteArrivalRow(data.data.id);
         Logger.log('deleteArrivalRow выполнен успешно');
         return jsonResponse({ success: true });
+      case 'archiveArrival':
+        archiveArrivalRow(data.data.id);
+        return jsonResponse({ success: true });
+      case 'restoreArrival':
+        restoreArrivalRow(data.data.id);
+        return jsonResponse({ success: true });
       case 'addExpense':
         addExpenseRow(data.data);
         return jsonResponse({ success: true });
@@ -399,7 +405,8 @@ function addArrivalRow(data) {
     data.type || 'Плановый',
     data.comment || '',
     JSON.stringify(data.items || []),
-    new Date()
+    new Date(),
+    'НЕТ'  // Архив
   ];
   Logger.log('📝 Данные для записи: ' + JSON.stringify(rowData));
   sheet.appendRow(rowData);
@@ -461,6 +468,32 @@ function deleteArrivalRow(id) {
   if (!found) {
     Logger.log('Приход с ID ' + id + ' не найден в таблице!');
     throw new Error('Приход с ID ' + id + ' не найден');
+  }
+}
+
+function archiveArrivalRow(id) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Приход');
+  const allData = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      sheet.getRange(i + 1, 13).setValue('ДА');
+      writeAudit('Приход', id, 'Архивирование', '', '');
+      break;
+    }
+  }
+}
+
+function restoreArrivalRow(id) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Приход');
+  const allData = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      sheet.getRange(i + 1, 13).setValue('НЕТ');
+      writeAudit('Приход', id, 'Восстановление из архива', '', '');
+      break;
+    }
   }
 }
 
@@ -837,7 +870,7 @@ function createSheet_Arrival(ss) {
   let sheet = ss.getSheetByName('Приход');
   if (!sheet) sheet = ss.insertSheet('Приход');
   
-  const headers = ['ID', 'Сотрудник_ID', 'ФИО сотрудника', 'Дата', 'Месяц', 'Сумма (₽)', 'Количество смен', 'Кем внесено', 'Тип', 'Комментарий', 'Позиции (JSON)', 'Дата внесения'];
+  const headers = ['ID', 'Сотрудник_ID', 'ФИО сотрудника', 'Дата', 'Месяц', 'Сумма (₽)', 'Количество смен', 'Кем внесено', 'Тип', 'Комментарий', 'Позиции (JSON)', 'Дата внесения', 'Архив'];
   
   // Проверяем текущие заголовки
   const currentHeaders = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
@@ -854,6 +887,9 @@ function createSheet_Arrival(ss) {
   sheet.setColumnWidth(3, 250);
   sheet.setColumnWidth(11, 400);
   sheet.getRange('F2:F10000').setNumberFormat('#,##0.00');
+  
+  const archiveRule = SpreadsheetApp.newDataValidation().requireValueInList(['ДА', 'НЕТ']).build();
+  sheet.getRange('M2:M10000').setDataValidation(archiveRule);
 }
 
 function createSheet_Expenses(ss) {
