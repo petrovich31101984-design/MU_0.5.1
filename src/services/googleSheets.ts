@@ -317,7 +317,7 @@ export async function getArrivals(): Promise<Arrival[]> {
     addedBy: row['Кем внесено'] || '',
     type: row['Тип'] || 'Плановый',
     comment: row['Комментарий'] || '',
-    archived: row['Архив'] === 'ДА',
+    archived: row['Архив'] === 'ДА' || false,
     items: row.items || [],
   }));
 }

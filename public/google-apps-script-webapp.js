@@ -411,6 +411,7 @@ function addArrivalRow(data) {
   Logger.log('📝 Данные для записи: ' + JSON.stringify(rowData));
   sheet.appendRow(rowData);
   writeAudit('Приход', data.id, 'Создание', '', 'Приход: ' + data.amount + '₽');
+  SpreadsheetApp.flush();
   Logger.log('✅ Приход успешно добавлен');
 }
 
@@ -433,6 +434,7 @@ function updateArrivalRow(id, data) {
       if (data.amount !== undefined) sheet.getRange(i + 1, 6).setValue(data.amount);
       if (data.items !== undefined) sheet.getRange(i + 1, 11).setValue(JSON.stringify(data.items));
       writeAudit('Приход', id, 'Изменение', '', JSON.stringify(data));
+      SpreadsheetApp.flush();
       Logger.log('Приход успешно обновлён');
       break;
     }
@@ -469,6 +471,9 @@ function deleteArrivalRow(id) {
     Logger.log('Приход с ID ' + id + ' не найден в таблице!');
     throw new Error('Приход с ID ' + id + ' не найден');
   }
+  
+  // Принудительно обновляем данные в Google Sheets
+  SpreadsheetApp.flush();
 }
 
 function archiveArrivalRow(id) {
@@ -479,6 +484,7 @@ function archiveArrivalRow(id) {
     if (String(allData[i][0]) === String(id)) {
       sheet.getRange(i + 1, 13).setValue('ДА');
       writeAudit('Приход', id, 'Архивирование', '', '');
+      SpreadsheetApp.flush();
       break;
     }
   }
@@ -492,6 +498,7 @@ function restoreArrivalRow(id) {
     if (String(allData[i][0]) === String(id)) {
       sheet.getRange(i + 1, 13).setValue('НЕТ');
       writeAudit('Приход', id, 'Восстановление из архива', '', '');
+      SpreadsheetApp.flush();
       break;
     }
   }
