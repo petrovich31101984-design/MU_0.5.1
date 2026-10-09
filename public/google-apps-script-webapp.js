@@ -187,6 +187,7 @@ function getEmployeesData() {
   const data = readSheetData('Сотрудники');
   return data.map(row => ({
     ...row,
+    'Персональный номер': String(row['Персональный номер'] || ''),
     'Пароль': row['Пароль (хэш)'] || ''
   }));
 }
@@ -231,7 +232,7 @@ function addEmployeeRow(data) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
   sheet.appendRow([
     data.id || '',
-    data.personalNumber || '',
+    String(data.personalNumber || ''), // Принудительно конвертируем в строку
     data.fullName || '',
     data.password || data.passwordHash || '',
     data.status || 'Активен',
@@ -258,7 +259,7 @@ function updateEmployeeRow(id, data) {
       if (data.status !== undefined) sheet.getRange(i + 1, 5).setValue(data.status);
       if (data.blocked !== undefined) sheet.getRange(i + 1, 9).setValue(data.blocked ? 'ДА' : 'НЕТ');
       if (data.note !== undefined) sheet.getRange(i + 1, 14).setValue(data.note);
-      if (data.personalNumber !== undefined) sheet.getRange(i + 1, 2).setValue(data.personalNumber);
+      if (data.personalNumber !== undefined) sheet.getRange(i + 1, 2).setValue(String(data.personalNumber)); // Принудительно конвертируем в строку
       if (data.fullName !== undefined) sheet.getRange(i + 1, 3).setValue(data.fullName);
       if (data.position !== undefined) sheet.getRange(i + 1, 6).setValue(data.position);
       if (data.phone !== undefined) sheet.getRange(i + 1, 10).setValue(data.phone);
@@ -280,6 +281,9 @@ function updateEmployeeShiftRow(id, shiftOpen) {
       // Автоматически меняем статус в зависимости от смены
       const newStatus = shiftOpen ? 'Активен' : 'Неактивен';
       sheet.getRange(i + 1, 5).setValue(newStatus);
+      // Убеждаемся, что персональный номер остаётся строкой
+      const personalNumber = String(allData[i][1] || '');
+      sheet.getRange(i + 1, 2).setValue(personalNumber);
       writeAudit('Сотрудники', id, 'Изменение смены', '', shiftOpen ? 'Смена открыта' : 'Смена закрыта');
       break;
     }
