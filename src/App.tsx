@@ -2104,7 +2104,7 @@ function ViewNomenclatureCardModal({
 
 // ============ ПРИХОД К СОТРУДНИКУ ============
 function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
-  const { employees, nomenclature, arrivals, setArrivals } = data;
+  const { employees, nomenclature, arrivals, setArrivals, refresh } = data;
   const [showAddArrival, setShowAddArrival] = useState(false);
   const [editingArrival, setEditingArrival] = useState<gs.Arrival | null>(null);
   const [viewingArrival, setViewingArrival] = useState<gs.Arrival | null>(null);
@@ -2167,11 +2167,17 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
   const handleDeleteArrival = async (id: string) => {
     if (!confirm('Удалить эту карту прихода?')) return;
     
-    setArrivals(arrivals.filter(a => a.id !== id));
-    gs.deleteArrival(id).catch(err => {
+    // Сначала удаляем из Google Sheets
+    try {
+      await gs.deleteArrival(id);
+      // Только после успешного удаления обновляем локальное состояние
+      setArrivals(arrivals.filter(a => a.id !== id));
+      // Принудительно обновляем все данные
+      await refresh();
+    } catch (err) {
       console.error('Ошибка удаления прихода:', err);
       alert('Ошибка при удалении прихода. Попробуйте ещё раз.');
-    });
+    }
   };
 
   return (
