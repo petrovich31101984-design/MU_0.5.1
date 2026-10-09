@@ -2930,7 +2930,6 @@ function EmployeesPage({ data }: { data: ReturnType<typeof useData> }) {
         await gs.deleteEmployee(id);
         // Удаляем из локального состояния без обновления данных
         data.setEmployees(employees.filter(e => e.id !== id));
-        alert(`✅ Сотрудник "${emp?.fullName}" успешно удалён`);
       } catch (error) {
         alert(`❌ Ошибка при удалении: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
       }
