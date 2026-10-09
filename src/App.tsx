@@ -2225,17 +2225,16 @@ function ArrivalPage({ data }: { data: ReturnType<typeof useData> }) {
   const handleDeleteArrival = async (id: string) => {
     if (!confirm('Удалить эту карту прихода?')) return;
     
-    // Сначала удаляем из Google Sheets
-    try {
-      await gs.deleteArrival(id);
-      // Только после успешного удаления обновляем локальное состояние
-      setArrivals(arrivals.filter(a => a.id !== id));
-      // Принудительно обновляем все данные
-      await refresh();
-    } catch (err) {
+    // Оптимистичное обновление - сразу удаляем из локального состояния
+    setArrivals(arrivals.filter(a => a.id !== id));
+    
+    // Удаляем из Google Sheets в фоне (без ожидания)
+    gs.deleteArrival(id).catch(err => {
       console.error('Ошибка удаления прихода:', err);
       alert('Ошибка при удалении прихода. Попробуйте ещё раз.');
-    }
+      // При ошибке перезагружаем данные
+      refresh();
+    });
   };
 
   return (
