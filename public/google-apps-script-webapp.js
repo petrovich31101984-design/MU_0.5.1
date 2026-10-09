@@ -230,9 +230,11 @@ function getAnnouncementsData() { return readSheetData('Объявления'); 
 
 function addEmployeeRow(data) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
+  const newRow = sheet.getLastRow() + 1;
+  
   sheet.appendRow([
     data.id || '',
-    String(data.personalNumber || ''), // Принудительно конвертируем в строку
+    String(data.personalNumber || ''),
     data.fullName || '',
     data.password || data.passwordHash || '',
     data.status || 'Активен',
@@ -247,6 +249,10 @@ function addEmployeeRow(data) {
     data.note || '',
     data.shiftOpen ? 'ДА' : 'НЕТ'
   ]);
+  
+  // Устанавливаем формат ячейки персонального номера как ТЕКСТ
+  sheet.getRange(newRow, 2).setNumberFormat('@');
+  
   writeAudit('Сотрудники', data.id, 'Создание', '', 'Сотрудник: ' + data.fullName);
 }
 
@@ -259,7 +265,11 @@ function updateEmployeeRow(id, data) {
       if (data.status !== undefined) sheet.getRange(i + 1, 5).setValue(data.status);
       if (data.blocked !== undefined) sheet.getRange(i + 1, 9).setValue(data.blocked ? 'ДА' : 'НЕТ');
       if (data.note !== undefined) sheet.getRange(i + 1, 14).setValue(data.note);
-      if (data.personalNumber !== undefined) sheet.getRange(i + 1, 2).setValue(String(data.personalNumber)); // Принудительно конвертируем в строку
+      if (data.personalNumber !== undefined) {
+        const cell = sheet.getRange(i + 1, 2);
+        cell.setNumberFormat('@'); // Устанавливаем формат ТЕКСТ
+        cell.setValue(String(data.personalNumber)); // Принудительно конвертируем в строку
+      }
       if (data.fullName !== undefined) sheet.getRange(i + 1, 3).setValue(data.fullName);
       if (data.position !== undefined) sheet.getRange(i + 1, 6).setValue(data.position);
       if (data.phone !== undefined) sheet.getRange(i + 1, 10).setValue(data.phone);
@@ -281,9 +291,11 @@ function updateEmployeeShiftRow(id, shiftOpen) {
       // Автоматически меняем статус в зависимости от смены
       const newStatus = shiftOpen ? 'Активен' : 'Неактивен';
       sheet.getRange(i + 1, 5).setValue(newStatus);
-      // Убеждаемся, что персональный номер остаётся строкой
+      // Убеждаемся, что персональный номер остаётся строкой с форматом ТЕКСТ
       const personalNumber = String(allData[i][1] || '');
-      sheet.getRange(i + 1, 2).setValue(personalNumber);
+      const cell = sheet.getRange(i + 1, 2);
+      cell.setNumberFormat('@'); // Устанавливаем формат ТЕКСТ
+      cell.setValue(personalNumber);
       writeAudit('Сотрудники', id, 'Изменение смены', '', shiftOpen ? 'Смена открыта' : 'Смена закрыта');
       break;
     }
@@ -916,4 +928,33 @@ function createSheet_Announcements(ss) {
   
   sheet.setColumnWidth(2, 300);
   sheet.setColumnWidth(3, 500);
+}
+
+// Функция для исправления формата персональных номеров (запустить один раз)
+function fixPersonalNumberFormat() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Сотрудники');
+  if (!sheet) {
+    Logger.log('Лист "Сотрудники" не найден');
+    return;
+  }
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    Logger.log('Нет данных для исправления');
+    return;
+  }
+  
+  // Устанавливаем формат ТЕКСТ для всей колонки персональных номеров (B2:B1000)
+  sheet.getRange('B2:B1000').setNumberFormat('@');
+  
+  // Пересохраняем все существующие значения как строки
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const personalNumber = String(data[i][1] || '');
+    if (personalNumber) {
+      sheet.getRange(i + 1, 2).setValue(personalNumber);
+    }
+  }
+  
+  Logger.log('Формат персональных номеров исправлен для ' + (lastRow - 1) + ' записей');
 }
