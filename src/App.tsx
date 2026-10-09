@@ -1526,17 +1526,31 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
   // Получаем всех сотрудников, кроме уволенных
   const activeEmployees = employees.filter(e => e.status !== 'Уволен');
 
-  // Отладочная информация
-  console.log('📊 BalancePage - Данные:', {
-    totalArrivals: arrivals.length,
-    totalExpenseSheets: expenseSheets.length,
-    totalEmployees: activeEmployees.length,
-    arrivalsByEmployee: activeEmployees.map(emp => ({
-      name: emp.fullName,
-      arrivals: arrivals.filter(a => a.employeeId === emp.id && a.archived !== true).length,
-      expenseSheets: expenseSheets.filter(s => s.employeeId === emp.id && s.archived !== true).length
-    }))
-  });
+  // Отладочная информация - ищем сотрудника Стадник
+  const stadnikEmployee = activeEmployees.find(emp => emp.fullName.includes('Стадник'));
+  if (stadnikEmployee) {
+    const stadnikArrivals = arrivals.filter(a => a.employeeId === stadnikEmployee.id);
+    const stadnikExpenseSheets = expenseSheets.filter(s => s.employeeId === stadnikEmployee.id);
+    
+    console.log('🔍 Данные для Стадник:', {
+      employeeId: stadnikEmployee.id,
+      employeeName: stadnikEmployee.fullName,
+      totalArrivals: stadnikArrivals.length,
+      arrivals: stadnikArrivals.map(a => ({
+        id: a.id,
+        amount: a.amount,
+        archived: a.archived,
+        date: a.date
+      })),
+      totalExpenseSheets: stadnikExpenseSheets.length,
+      expenseSheets: stadnikExpenseSheets.map(s => ({
+        id: s.id,
+        totalAmount: s.totalAmount,
+        archived: s.archived,
+        date: s.date
+      }))
+    });
+  }
 
   // Функция для расчёта остатка по сотруднику и номенклатуре
   const calculateBalance = (employeeId: string, nomenclatureId: string): number => {
@@ -1605,11 +1619,6 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
   // Принудительное обновление данных
   const handleForceRefresh = async () => {
     console.log('🔄 Принудительное обновление данных...');
-    console.log('📊 Текущие данные:', {
-      arrivals: arrivals.length,
-      expenseSheets: expenseSheets.length,
-      employees: employees.length
-    });
     
     // Очищаем кэш браузера
     if ('caches' in window) {
@@ -1618,11 +1627,8 @@ function BalancePage({ data }: { data: ReturnType<typeof useData> }) {
       console.log('🗑️ Кэш браузера очищен');
     }
     
-    // Перезагружаем данные
-    await data.refresh();
-    console.log('✅ Данные обновлены');
-    
-    alert('✅ Данные обновлены! Кэш очищен.');
+    // Перезагружаем страницу полностью
+    window.location.reload();
   };
 
   return (
