@@ -150,10 +150,7 @@ function doPost(e) {
 function jsonResponse(data) {
   return ContentService
     .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
-    .setHeader('Pragma', 'no-cache')
-    .setHeader('Expires', '0');
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ==================== ЧТЕНИЕ ДАННЫХ ====================
